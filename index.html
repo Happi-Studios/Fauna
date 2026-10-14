@@ -179,6 +179,13 @@ details summary{cursor:pointer;color:var(--mut);font-size:13px}
 .ncb{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;text-align:left;font-size:14px}
 .ncb.on{border-color:var(--acc)}
 .ncb .dot{width:18px;height:18px;border-radius:50%;flex-shrink:0}
+.acct{margin-left:auto;display:flex;align-items:center;gap:8px}
+.twbtn{background:#9146FF;color:#fff;border:0;border-radius:10px;padding:8px 14px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px}
+.me{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:3px 10px 3px 3px;font-size:13px}
+.me img{width:26px;height:26px;border-radius:50%}
+.me .roles2{color:var(--mut);font-size:11px}
+.lnk{background:none;border:0;color:var(--mut);font-size:12px;text-decoration:underline;padding:0}
+input[disabled]{opacity:.7}
 </style>
 </head>
 <body>
@@ -186,6 +193,7 @@ details summary{cursor:pointer;color:var(--mut);font-size:13px}
   <header>
     <h1>Crea tu <span>Fauna</span></h1>
     <div class="sub">El escuadrón de los rechazados · personaliza tu bicho y pega el código en el chat</div>
+    <div class="acct" id="acct"></div>
   </header>
   <div class="grid">
     <div class="left">
@@ -396,9 +404,55 @@ const cost=st=>st.u?0:SLOTS.reduce((a,k)=>a+ACC[k].items[st[k]].c,0);
 let st={s:0,c:0,h:0,f:0,n:0,m:0,b:0,nc:0,u:0},pose='idle',tab='s';
 const TABS=[['s','Animal'],['c','Color'],['h','Cabeza'],['f','Cara'],['n','Cuello'],['m','Mano'],['b','Espalda'],['nc','Nombre'],['u','Rol']];
 const $=id=>document.getElementById(id);
-const user=()=>$('nm').value.trim().replace(/^@/,'').toLowerCase();
-function nameHTML(nc,txt){const c=NCOL[nc];if(c.v==='rb')return `<span class="rb">${txt}</span>`;return `<span style="color:${c.v||'#cfcfd8'}">${txt}</span>`}
-function setTag(){const v=$('nm').value.trim().replace(/^@/,'').replace(/[<>&"]/g,'');$('nmTag').innerHTML=nameHTML(st.nc,'@'+(v||'tu_usuario'))+(st.u?' <span style="color:#B197FC">⚔</span>':'')}
+const esc=t=>String(t).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+
+/* ---------- Login con Twitch (flujo implícito, sin servidor) ---------- */
+const TW={
+  client:'tq8losujpdghffxodtfpxtbqzxklu1',
+  redirect:'https://happi-studios.github.io/Fauna/',   /* debe ser IGUAL al registrado en dev.twitch.tv */
+  channel:'',                                           /* usuario del canal de Brigh (para saber si eres sub/mod) */
+  scopes:'user:read:subscriptions user:read:moderated_channels'
+};
+let me=null; /* {id,login,name,img,color,sub,mod} — sub/mod quedan undefined si no se pudieron revisar */
+const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
+const sstore={get:k=>{try{return sessionStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{v==null?sessionStorage.removeItem(k):sessionStorage.setItem(k,v)}catch(e){}}};
+function twLogin(){const s=Math.random().toString(36).slice(2)+Date.now().toString(36);sstore.set('tw_state',s);
+location.href='https://id.twitch.tv/oauth2/authorize?response_type=token&client_id='+TW.client+'&redirect_uri='+encodeURIComponent(TW.redirect)+'&scope='+encodeURIComponent(TW.scopes)+'&state='+s}
+function twLogout(){store.set('tw_token',null);me=null;$('nm').disabled=false;renderAcct();renderBig();renderPanel()}
+async function helix(path,tok){const r=await fetch('https://api.twitch.tv/helix/'+path,{headers:{'Authorization':'Bearer '+tok,'Client-Id':TW.client}});if(r.status===401)throw new Error('401');return r}
+async function twInit(){
+  const h=new URLSearchParams(location.hash.slice(1));
+  if(h.get('access_token')){if(h.get('state')&&h.get('state')===sstore.get('tw_state'))store.set('tw_token',h.get('access_token'));sstore.set('tw_state',null);history.replaceState(null,'',location.pathname+location.search)}
+  if(h.get('error')){history.replaceState(null,'',location.pathname+location.search);toast('No se pudo iniciar sesión con Twitch')}
+  const tok=store.get('tw_token');if(!tok){renderAcct();return}
+  try{
+    const u=(await (await helix('users',tok)).json()).data[0];
+    me={id:u.id,login:u.login,name:u.display_name,img:u.profile_image_url,color:null};
+    try{const c=(await (await helix('chat/color?user_id='+u.id,tok)).json()).data[0];me.color=c&&c.color||null}catch(e){}
+    if(TW.channel){try{
+      const b=(await (await helix('users?login='+encodeURIComponent(TW.channel),tok)).json()).data[0];
+      if(b){if(b.id===u.id){me.sub=true;me.mod=true}else{
+        me.sub=(await helix('subscriptions/user?broadcaster_id='+b.id+'&user_id='+u.id,tok)).status===200;
+        let cur='',mod=false;for(let i=0;i<10&&!mod;i++){const j=await (await helix('moderation/channels?user_id='+u.id+'&first=100'+(cur?'&after='+cur:''),tok)).json();mod=(j.data||[]).some(x=>x.broadcaster_id===b.id);cur=j.pagination&&j.pagination.cursor;if(!cur)break}
+        me.mod=mod}}
+    }catch(e){if(String(e.message)==='401')throw e}}
+    $('nm').value=me.login;$('nm').disabled=true;
+  }catch(e){store.set('tw_token',null);me=null}
+  renderAcct();renderBig();renderPanel();
+}
+function renderAcct(){const a=$('acct');if(location.protocol==='file:'){a.innerHTML='';return}
+if(!me){a.innerHTML='<button class="twbtn" onclick="twLogin()">Entrar con Twitch</button>';return}
+const r=[me.mod?'⚔ Mod':'',me.sub?'★ Sub':''].filter(Boolean).join(' · ');
+a.innerHTML=`<div class="me"><img src="${esc(me.img)}" alt=""><div><div>${esc(me.name)}</div>${r?`<div class="roles2">${r}</div>`:''}</div></div><button class="lnk" onclick="twLogout()">Salir</button>`}
+const user=()=>me?me.login:$('nm').value.trim().replace(/^@/,'').toLowerCase();
+/* Bloqueos: con sesión se revisan de verdad; sin sesión solo el exclusivo se bloquea (el bot valida lo demás) */
+function blocked(k,i){
+  if(k==='s'){const sp=SP[SPK[i]];if(sp.only&&user()!==sp.only)return `🔒 Exclusivo de @${sp.only}`+(me?'':' · entra con Twitch');}
+  if(k==='nc'&&NCOL[i].sub&&me&&me.sub===false)return '★ Solo para subs del canal';
+  if(k==='u'&&i===1&&me&&me.mod===false)return '⚔ Solo para moderadores';
+  return null}
+function nameHTML(nc,txt){const c=NCOL[nc];if(c.v==='rb')return `<span class="rb">${txt}</span>`;return `<span style="color:${c.v||(me&&me.color)||'#cfcfd8'}">${txt}</span>`}
+function setTag(){const v=me?me.name:$('nm').value.trim().replace(/^@/,'');$('nmTag').innerHTML=nameHTML(st.nc,'@'+esc(v||'tu_usuario'))+(st.u?' <span style="color:#B197FC">⚔</span>':'')}
 function renderBig(){$('big').innerHTML=animal(st,pose,120);const s=SP[SPK[st.s]];$('desc').textContent=`${s.n}: ${s.d}`+(s.only?` · Exclusivo de @${s.only}`:'');setTag();
 $('code').textContent=encode(st);const t=cost(st);const req=[st.u?'ser mod':'',NCOL[st.nc].sub?'ser sub':'',s.only?'ser @'+s.only:''].filter(Boolean);
 $('cost').innerHTML=(t?`Costo al pegarlo: <b>${t.toLocaleString('es-MX')} pts</b>`:'Todo gratis')+(req.length?` · Requiere ${req.length>1?req.slice(0,-1).join(', ')+' y '+req[req.length-1]:req[0]}`:'');}
@@ -413,7 +467,7 @@ else if(tab==='nc')h='<p class="desc">El color de tu nombre en todos los overlay
 else if(tab==='u')h='<p class="desc">Si eres moderador puedes usar el uniforme completo. Es todo o nada: con uniforme se ocultan tus accesorios; sin uniforme usas tu personalización normal.</p><div class="roles">'+tile(!st.u,'Mi personalización',animal({...st,u:0},'none',56),'','pick(\'u\',0)')+tile(st.u,'Uniforme de mod',animal({...st,u:1},'none',56),'<span class="lock">⚔ Solo mods</span>','pick(\'u\',1)')+'</div>';
 else h=(st.u?'<p class="desc">Tienes puesto el uniforme de mod: estos accesorios se guardan, pero no se ven hasta que te lo quites en la pestaña Rol.</p>':'')+'<div class="opts">'+ACC[tab].items.map((it,i)=>tile(st[tab]===i,it.n,animal({...st,u:0,[tab]:i},'none',38),costBadge(it.c),`pick('${tab}',${i})`)).join('')+'</div>';
 $('panel').innerHTML=h}
-function pick(k,i){if(k==='s'){const sp=SP[SPK[i]];if(sp.only&&user()!==sp.only){toast(`🔒 Exclusivo de @${sp.only}`);return}st.s=i;st.c=COLK.indexOf(sp.def)}else st[k]=i;renderBig();renderPanel()}
+function pick(k,i){const b=blocked(k,i);if(b){toast(b);return}if(k==='s'){st.s=i;st.c=COLK.indexOf(SP[SPK[i]].def)}else st[k]=i;renderBig();renderPanel()}
 function randomize(){const r=n=>Math.floor(Math.random()*n),open=SPK.map((k,i)=>i).filter(i=>!SP[SPK[i]].only);st={s:open[r(open.length)],c:r(COLK.length-1),nc:r(NCOL.length-1),u:0};SLOTS.forEach(k=>st[k]=Math.random()<.45?0:r(ACC[k].items.length));renderBig();renderPanel()}
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),2200)}
 function copyCode(){const t=encode(st);const done=()=>toast('¡Copiado! Pégalo en el chat del stream');
@@ -421,7 +475,7 @@ const fb=()=>{const a=document.createElement('textarea');a.value=t;a.style.posit
 if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(done,fb);else fb()}
 function loadCode(){const v=decode($('load').value);if(!v){$('lerr').textContent='Ese código no es válido. Revisa que esté completo.';return}st=v;renderBig();renderPanel();toast('Mascota cargada')}
 $('nm').addEventListener('input',setTag);
-renderTabs();renderPoses();renderBig();renderPanel();
+renderTabs();renderPoses();renderBig();renderPanel();twInit();
 </script>
 </body>
 </html>
