@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crea tu Fauna</title>
+<style>
+:root{--bg:#0f0d16;--panel:#18151f;--panel2:#211d2b;--line:#2e2939;--txt:#f1eff5;--mut:#a29cb0;--acc:#5DCAA5;--acc2:#EF9F27;--bad:#F09595}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.5}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:980px;margin:0 auto;padding:16px 16px 120px}
+header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:24px;margin:0;font-weight:700;letter-spacing:-.3px}
+h1 span{color:var(--acc)}
+.sub{color:var(--mut);font-size:13px}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:820px){.grid{grid-template-columns:360px 1fr}.left{position:sticky;top:16px;align-self:start}}
+.stage{position:relative;height:300px;border-radius:16px;background:var(--panel);border:1px solid var(--line);overflow:hidden;display:flex;align-items:flex-end;justify-content:center}
+.stage .floor{position:absolute;left:0;right:0;bottom:0;height:34px;background:#1d1a26;border-top:1px solid var(--line)}
+.stage .nm{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:#0c0b12;border:1px solid var(--line);border-radius:20px;padding:2px 12px;font-size:13px;white-space:nowrap}
+#big{position:relative;margin-bottom:20px}
+.desc{color:var(--mut);font-size:13px;margin:8px 2px 0;min-height:20px}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-size:13px}
+.chip.on{border-color:var(--acc);color:var(--acc)}
+input[type=text]{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:var(--txt);font:inherit;font-size:14px}
+input[type=text]:focus{outline:none;border-color:var(--acc)}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;background:transparent;border:1px solid var(--line);border-radius:10px;padding:7px 14px;font-size:14px;color:var(--mut)}
+.tab.on{background:var(--panel2);color:var(--txt);border-color:var(--acc)}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px;margin-top:12px}
+.opt{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:118px}
+.opt:hover{border-color:#4a4357}
+.opt.on{border-color:var(--acc);background:#1b2420}
+.opt .tn{height:76px;display:flex;align-items:flex-end;overflow:visible}
+.opt .lb{font-size:12px;text-align:center;line-height:1.2}
+.cost{position:absolute;top:5px;right:5px;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;background:#3a2a10;color:var(--acc2)}
+.free{background:#14302a;color:var(--acc)}
+.sws{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.swb{width:40px;height:40px;border-radius:50%;border:3px solid transparent;padding:0}
+.swb.on{border-color:#fff}
+.sect{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}
+.sect h2{font-size:15px;margin:0 0 8px;font-weight:600}
+.how{color:var(--mut);font-size:13px;margin:0;padding-left:18px}
+.how li{margin:3px 0}
+details summary{cursor:pointer;color:var(--mut);font-size:13px}
+.err{color:var(--bad);font-size:13px;min-height:18px;margin-top:4px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(15,13,22,.96);border-top:1px solid var(--line);padding:10px 16px;z-index:10}
+.bar .in{max-width:980px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.code{flex:1;min-width:0}
+.code .c{font-family:ui-monospace,Consolas,monospace;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.code .t{font-size:12px;color:var(--mut)}
+.code .t b{color:var(--acc2);font-weight:600}
+.btn{background:var(--acc);color:#06221a;border:0;border-radius:12px;padding:11px 16px;font-weight:700;font-size:14px;white-space:nowrap}
+.btn2{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px}
+.toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%) translateY(20px);background:#1b2420;border:1px solid var(--acc);color:var(--txt);padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:11;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.r g{transform-box:view-box}
+.r .wl,.r .wr{animation:flap .9s ease-in-out infinite alternate}.r .fast{animation-duration:.06s!important}
+.st-run .wl,.st-run .wr,.st-cheer .wl,.st-cheer .wr{animation-duration:.16s}
+@keyframes flap{from{transform:scaleX(1)}to{transform:scaleX(.45)}}
+.r .aw{animation:aflap 1.6s ease-in-out infinite alternate}
+@keyframes aflap{from{transform:scaleX(1)}to{transform:scaleX(.75)}}
+.r .tail{animation:wag 1.3s ease-in-out infinite alternate}.r .ant{animation:twitch 2.2s infinite}
+.r .halo{animation:halo 1.2s ease-in-out infinite alternate}.r .ball{animation:ball 2s ease-in-out infinite alternate}.r .flame{animation:flame .12s linear infinite alternate}
+@keyframes halo{from{transform:translateY(0)}to{transform:translateY(-1.2px)}}
+@keyframes ball{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}
+@keyframes flame{from{transform:scaleY(1)}to{transform:scaleY(.55)}}
+@keyframes wag{from{transform:rotate(-8deg)}to{transform:rotate(12deg)}}
+@keyframes twitch{0%,78%,100%{transform:rotate(0)}82%{transform:rotate(7deg)}86%{transform:rotate(-6deg)}90%{transform:rotate(3deg)}}
+@keyframes sw{0%,100%{transform:rotate(24deg)}50%{transform:rotate(-24deg)}}
+@keyframes kn{0%{transform:rotate(18deg)}25%{transform:rotate(42deg)}50%{transform:rotate(0)}75%{transform:rotate(4deg)}100%{transform:rotate(18deg)}}
+@keyframes swR{0%,100%{transform:rotate(40deg)}50%{transform:rotate(-40deg)}}
+@keyframes knR{0%{transform:rotate(30deg)}25%{transform:rotate(80deg)}50%{transform:rotate(5deg)}75%{transform:rotate(10deg)}100%{transform:rotate(30deg)}}
+@keyframes bob{from{transform:translateY(0)}to{transform:translateY(-1.4px)}}
+@keyframes breathe{to{transform:translateY(-.7px)}}
+@keyframes tilt{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+@keyframes wv{from{transform:rotate(-35deg)}to{transform:rotate(15deg)}}
+@keyframes jp{0%,100%{transform:translateY(0)}40%{transform:translateY(-9px)}}
+@keyframes tuck{0%,100%{transform:rotate(0)}40%{transform:rotate(35deg)}}
+@keyframes hop{0%,100%{transform:translateY(0)}45%{transform:translateY(-6px)}}
+@keyframes hopL{0%,100%{transform:rotate(-6deg)}45%{transform:rotate(22deg)}}
+@keyframes hopR{0%,100%{transform:rotate(6deg)}45%{transform:rotate(-22deg)}}
+@keyframes hopS{0%,100%{transform:rotate(0)}45%{transform:rotate(-30deg)}}
+@keyframes hopSR{0%,100%{transform:rotate(0)}45%{transform:rotate(30deg)}}
+@keyframes hophop{0%,100%{transform:translateY(0)}45%{transform:translateY(-3px)}}
+@keyframes flapA{from{transform:rotate(25deg)}to{transform:rotate(85deg)}}
+@keyframes flapAR{from{transform:rotate(-25deg)}to{transform:rotate(-85deg)}}
+@keyframes hover{from{transform:translateY(-6px)}to{transform:translateY(-8.5px)}}
+@keyframes dangle{from{transform:rotate(10deg)}to{transform:rotate(-4deg)}}
+@keyframes dangleR{from{transform:rotate(-10deg)}to{transform:rotate(4deg)}}
+@keyframes lope{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-2.5px) rotate(3deg)}}
+@keyframes waddle{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+@keyframes pbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.4px)}}
+@keyframes wash{from{transform:rotate(-30deg)}to{transform:rotate(-60deg)}}
+@keyframes washR{from{transform:rotate(30deg)}to{transform:rotate(60deg)}}
+@keyframes peck{0%,62%,100%{transform:translateY(0)}68%,72%{transform:translateY(4px)}76%{transform:translateY(0)}82%,86%{transform:translateY(4px)}90%{transform:translateY(0)}}
+@keyframes dead{0%,48%,100%{transform:rotate(0)}56%,86%{transform:rotate(-92deg) translateY(2px)}94%{transform:rotate(4deg)}}
+@keyframes stiff{0%,50%,100%{transform:rotate(0)}58%,86%{transform:rotate(-25deg)}}
+@keyframes laugh{0%,52%,100%{transform:translateY(0)}56%,64%,72%,80%{transform:translateY(-1.2px)}60%,68%,76%,84%{transform:translateY(.4px)}}
+@keyframes cackle{0%,52%,90%,100%{transform:rotate(0)}58%,84%{transform:rotate(-14deg)}}
+@keyframes ctilt{0%,28%,100%{transform:rotate(0)}34%,62%{transform:rotate(20deg)}68%,92%{transform:rotate(-14deg)}}
+@keyframes swish{from{transform:rotate(-28deg)}to{transform:rotate(26deg)}}
+@keyframes sniff{0%,58%,100%{transform:translateY(0)}62%,70%,78%{transform:translateY(-.8px) rotate(3deg)}66%,74%{transform:translateY(.4px)}}
+@keyframes puff{0%,62%,100%{transform:scale(1)}72%,86%{transform:scale(1.5,2.1)}}
+@keyframes howl{0%,50%,94%,100%{transform:rotate(0)}60%,86%{transform:rotate(-30deg) translateY(-1.5px)}}
+@keyframes sun{from{transform:rotate(68deg)}to{transform:rotate(80deg)}}
+@keyframes sunR{from{transform:rotate(-68deg)}to{transform:rotate(-80deg)}}
+@keyframes wrapA{0%,55%,100%{transform:rotate(-40deg)}65%,86%{transform:rotate(75deg)}}
+@keyframes wrapAR{0%,55%,100%{transform:rotate(40deg)}65%,86%{transform:rotate(-75deg)}}
+@keyframes wrapF{0%,55%,100%{transform:rotate(-55deg)}65%,86%{transform:rotate(10deg)}}
+@keyframes wrapFR{0%,55%,100%{transform:rotate(55deg)}65%,86%{transform:rotate(-10deg)}}
+@keyframes sway{from{transform:translateY(-6px) rotate(-4deg)}to{transform:translateY(-8px) rotate(4deg)}}
+.st-idle .rig{animation:breathe 1.2s ease-in-out infinite alternate}.st-idle .head{animation:tilt 2.6s ease-in-out infinite alternate}
+.st-idle .armL,.st-wave .armL{transform:rotate(6deg)}.st-idle .armR{transform:rotate(-6deg)}
+.st-walk{--d:.7s}.st-carry{--d:.62s}.st-run{--d:.36s}
+.st-walk .legL,.st-carry .legL{animation:sw var(--d) ease-in-out infinite}
+.st-walk .legR,.st-carry .legR{animation:sw var(--d) ease-in-out infinite;animation-delay:calc(var(--d)/-2)}
+.st-walk .shinL,.st-carry .shinL{animation:kn var(--d) ease-in-out infinite}
+.st-walk .shinR,.st-carry .shinR{animation:kn var(--d) ease-in-out infinite;animation-delay:calc(var(--d)/-2)}
+.st-walk .armL{animation:sw var(--d) ease-in-out infinite;animation-delay:calc(var(--d)/-2)}.st-walk .armR{animation:sw var(--d) ease-in-out infinite}
+.st-walk .foreL,.st-walk .foreR{transform:rotate(-18deg)}
+.st-walk .rig,.st-carry .rig,.st-run .rig{animation:bob calc(var(--d)/2) ease-in-out infinite alternate}
+.st-run .legL{animation:swR var(--d) linear infinite}.st-run .legR{animation:swR var(--d) linear infinite;animation-delay:calc(var(--d)/-2)}
+.st-run .shinL{animation:knR var(--d) linear infinite}.st-run .shinR{animation:knR var(--d) linear infinite;animation-delay:calc(var(--d)/-2)}
+.st-run .armL{animation:swR var(--d) linear infinite;animation-delay:calc(var(--d)/-2)}.st-run .armR{animation:swR var(--d) linear infinite}
+.st-run .foreL,.st-run .foreR{transform:rotate(-75deg)}.st-run .head{transform:rotate(-6deg)}
+.st-carry .armL,.st-hold .armL,.st-cheer .armL{transform:rotate(140deg)}.st-carry .armR,.st-hold .armR,.st-cheer .armR{transform:rotate(-140deg)}
+.st-carry .foreL,.st-hold .foreL,.st-cheer .foreL{transform:rotate(25deg)}.st-carry .foreR,.st-hold .foreR,.st-cheer .foreR{transform:rotate(-25deg)}
+.st-hold .rig{animation:breathe .5s ease-in-out infinite alternate}
+.st-wave .armR{transform:rotate(-140deg)}.st-wave .foreR{animation:wv .35s ease-in-out infinite alternate}.st-wave .rig{animation:breathe .7s ease-in-out infinite alternate}.st-wave .head{transform:rotate(6deg)}
+.st-cheer .rig{animation:jp .6s ease-in-out infinite}.st-cheer .shinL,.st-cheer .shinR{animation:tuck .6s ease-in-out infinite}
+.g-scurry.st-walk,.g-scurry.st-carry{--d:.3s}.g-scurry.st-run{--d:.2s}
+.g-bob.st-walk,.g-bob.st-carry{--d:.5s}.g-bob.st-walk .head,.g-bob.st-carry .head,.g-bob.st-run .head{animation:pbob calc(var(--d)/2) ease-in-out infinite}
+.g-lope.st-walk,.g-lope.st-carry{--d:.55s}.g-lope.st-walk .rig,.g-lope.st-carry .rig,.g-lope.st-run .rig{animation:lope var(--d) ease-in-out infinite}
+.g-waddle.st-walk,.g-waddle.st-carry{--d:.8s}.g-waddle.st-walk .rig,.g-waddle.st-carry .rig{animation:waddle var(--d) ease-in-out infinite}
+.g-hop.st-walk,.g-hop.st-carry{--d:.55s}.g-hop.st-run{--d:.38s}
+.g-hop.st-walk .rig,.g-hop.st-carry .rig,.g-hop.st-run .rig{animation:hop var(--d) ease-in-out infinite}
+.g-hop.st-walk .legL,.g-hop.st-carry .legL,.g-hop.st-run .legL{animation:hopL var(--d) ease-in-out infinite}
+.g-hop.st-walk .legR,.g-hop.st-carry .legR,.g-hop.st-run .legR{animation:hopR var(--d) ease-in-out infinite}
+.g-hop.st-walk .shinL,.g-hop.st-carry .shinL,.g-hop.st-run .shinL{animation:hopS var(--d) ease-in-out infinite}
+.g-hop.st-walk .shinR,.g-hop.st-carry .shinR,.g-hop.st-run .shinR{animation:hopSR var(--d) ease-in-out infinite}
+.g-hop.st-walk .armL,.g-hop.st-run .armL{animation:none;transform:rotate(20deg)}.g-hop.st-walk .armR,.g-hop.st-run .armR{animation:none;transform:rotate(-20deg)}
+.g-flutter.st-walk,.g-flutter.st-run{--d:.45s}
+.g-flutter.st-walk .rig,.g-flutter.st-run .rig{animation:hophop calc(var(--d)/2) ease-in-out infinite}
+.g-flutter.st-walk .armL,.g-flutter.st-run .armL{animation:flapA .22s ease-in-out infinite alternate}.g-flutter.st-walk .armR,.g-flutter.st-run .armR{animation:flapAR .22s ease-in-out infinite alternate}
+.g-flutter.st-walk .foreL,.g-flutter.st-walk .foreR{transform:none}
+.g-hover.st-idle .rig,.g-hover.st-walk .rig,.g-hover.st-run .rig{animation:hover .9s ease-in-out infinite alternate}
+.g-hover.st-walk .legL,.g-hover.st-run .legL{animation:dangle .5s ease-in-out infinite alternate}.g-hover.st-walk .legR,.g-hover.st-run .legR{animation:dangleR .5s ease-in-out infinite alternate}
+.g-hover.st-walk .shinL,.g-hover.st-walk .shinR,.g-hover.st-run .shinL,.g-hover.st-run .shinR{animation:none;transform:rotate(10deg)}
+.q-wash.st-idle .armL,.q-rub.st-idle .armL{transform:rotate(-28deg)}.q-wash.st-idle .armR,.q-rub.st-idle .armR{transform:rotate(28deg)}
+.q-wash.st-idle .foreL{animation:wash .32s ease-in-out infinite alternate}.q-wash.st-idle .foreR{animation:washR .32s ease-in-out infinite alternate}
+.q-rub.st-idle .foreL{animation:wash .14s ease-in-out infinite alternate}.q-rub.st-idle .foreR{animation:washR .14s ease-in-out infinite alternate}
+.q-peck.st-idle .head{animation:peck 2.6s ease-in-out infinite}
+.q-dead.st-idle .rig{animation:dead 6s ease-in-out infinite}.q-dead.st-idle .legL,.q-dead.st-idle .legR,.q-dead.st-idle .armL,.q-dead.st-idle .armR{animation:stiff 6s ease-in-out infinite}
+.q-laugh.st-idle .rig{animation:laugh 2.4s infinite}.q-laugh.st-idle .head{animation:cackle 2.4s ease-in-out infinite}
+.q-tilt.st-idle .head{animation:ctilt 3.2s ease-in-out infinite}
+.q-swish.st-idle .tail{animation:swish 1.6s ease-in-out infinite alternate}
+.q-sniff.st-idle .head{animation:sniff 2s infinite}
+.q-puff.st-idle .puff{animation:puff 3s ease-in-out infinite}
+.q-howl.st-idle .head{animation:howl 5s ease-in-out infinite}
+.q-sun.st-idle .armL{animation:sun 2s ease-in-out infinite alternate}.q-sun.st-idle .armR{animation:sunR 2s ease-in-out infinite alternate}.q-sun.st-idle .foreL{transform:rotate(-20deg)}.q-sun.st-idle .foreR{transform:rotate(20deg)}
+.q-wrap.st-idle .armL{animation:wrapA 5s ease-in-out infinite}.q-wrap.st-idle .armR{animation:wrapAR 5s ease-in-out infinite}.q-wrap.st-idle .foreL{animation:wrapF 5s ease-in-out infinite}.q-wrap.st-idle .foreR{animation:wrapFR 5s ease-in-out infinite}
+.q-sway.st-idle .rig{animation:sway 1.6s ease-in-out infinite alternate}
+.st-none *{animation-play-state:paused!important}
+@keyframes wob{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+.q-wob.st-idle .rig{animation:wob 1s ease-in-out infinite alternate}.q-wob.st-walk .rig{animation:wob .35s ease-in-out infinite alternate}
+.cap .head{animation:none!important;transform:none!important}
+.lock{position:absolute;top:5px;right:5px;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;background:#2a2238;color:#AFA9EC}
+.rb{background-image:linear-gradient(90deg,#F09595,#FAC775,#97C459,#5DCAA5,#85B7EB,#AFA9EC);-webkit-background-clip:text;background-clip:text;color:transparent}
+.roles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.roles .opt{min-height:180px}.roles .tn{height:130px}
+.ncs{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.ncb{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;text-align:left;font-size:14px}
+.ncb.on{border-color:var(--acc)}
+.ncb .dot{width:18px;height:18px;border-radius:50%;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Crea tu <span>Fauna</span></h1>
+    <div class="sub">El escuadrón de los rechazados · personaliza tu bicho y pega el código en el chat</div>
+  </header>
+  <div class="grid">
+    <div class="left">
+      <div class="stage"><div class="floor"></div><div class="nm" id="nmTag">@tu_usuario</div><div id="big"></div></div>
+      <div class="desc" id="desc"></div>
+      <div class="row" id="poses"></div>
+      <div style="margin-top:12px"><input type="text" id="nm" maxlength="25" placeholder="Tu usuario de Twitch (solo para la vista previa)"></div>
+    </div>
+    <div>
+      <div class="tabs" id="tabs"></div>
+      <div id="panel"></div>
+      <div class="sect" style="margin-top:16px">
+        <h2>¿Cómo se usa?</h2>
+        <ol class="how">
+          <li>Elige tu animal, color y accesorios.</li>
+          <li>Toca <b>Copiar mascota</b>.</li>
+          <li>Pega el código en el chat del stream. El bot lo guarda a tu nombre.</li>
+          <li>Los accesorios con precio se cobran en puntos del canal al pegarlo. Si no te alcanza, el bot te avisa.</li>
+          <li>Lo marcado como exclusivo, solo subs o solo mods, el bot lo revisa con tu cuenta de Twitch.</li>
+        </ol>
+        <details style="margin-top:10px">
+          <summary>¿Ya tienes un código? Cárgalo para editarlo</summary>
+          <div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="load" placeholder="!fauna F2-…" oninput="document.getElementById('lerr').textContent=''"><button class="btn2" onclick="loadCode()">Cargar</button></div>
+          <div class="err" id="lerr"></div>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="bar"><div class="in">
+  <div class="code"><div class="c" id="code"></div><div class="t" id="cost"></div></div>
+  <button class="btn2" onclick="randomize()" aria-label="Aleatorio" title="Aleatorio">🎲</button>
+  <button class="btn" onclick="copyCode()">Copiar mascota</button>
+</div></div>
+<div class="toast" id="toast"></div>
+<script>
+/* ---------- Datos base ---------- */
+const COLORS={gris:'#9aa0a6',pizarra:'#8f98a8',negro:'#55535e',cafe:'#a0785a',canela:'#b5835a',arena:'#c9a46b',cobre:'#9c5a32',oliva:'#8a9a5b',azul:'#85B7EB',rojo:'#F09595',verde:'#97C459',morado:'#AFA9EC',rosa:'#ED93B1',naranja:'#EF9F27',aqua:'#5DCAA5',dorado:'#FAC775',pepino:'#6f9e3c'};
+const COLK=Object.keys(COLORS);
+const POSES=[['idle','Manía'],['walk','Caminar'],['run','Correr'],['wave','Saludar'],['hold','Cargar'],['cheer','Celebrar']];
+const O='#1a1a1a',D='#262626',L='#f1efe8',PK='#F4C0D1',NS='#ED93B1';
+const HEAD=c=>`<ellipse cx="20" cy="16" rx="9.6" ry="8.4" fill="${c}" stroke="${O}" stroke-width=".7"/>`;
+const WHI='<path d="M16.4 20.4 L10.2 19.4 M16.4 21.2 L10.4 22.4 M23.6 20.4 L29.8 19.4 M23.6 21.2 L29.6 22.4" stroke="#e8e8e8" stroke-width=".35" fill="none"/>';
+const MOUTH=y=>`<path d="M20 ${y} Q19 ${y+1.2} 18 ${y+.7} M20 ${y} Q21 ${y+1.2} 22 ${y+.7}" fill="none" stroke="#111" stroke-width=".45" stroke-linecap="round"/>`;
+const tl=(d,w1,w2,c)=>`<path d="${d}" fill="none" stroke="${O}" stroke-width="${w1}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${c}" stroke-width="${w2}" stroke-linecap="round"/>`;
+const mp=(pts,m)=>pts.map(([x,y])=>`${m?40-x:x} ${y}`);
+const poly=(pts,m,f,st,sw)=>`<path d="M${mp(pts,m).join(' L ')}Z" fill="${f}" stroke="${st||O}" stroke-width="${sw||.5}" stroke-linejoin="round"/>`;
+const segs=(ss,m,col,w,op)=>`<path d="${ss.map(s=>'M'+mp(s,m).join(' L ')).join(' ')}" stroke="${col}" stroke-width="${w}" fill="none" stroke-linecap="round" opacity="${op||1}"/>`;
+const BATA=[[15,26.4],[12,37],[7.6,41],[15.4,47.6]];
+const BATF=[[12,37],[1.8,40.4],[5,43.8],[1.2,48],[6.6,47.8],[4.6,53.6],[9.4,50.6],[10.4,56.6],[13.4,50.8],[15.4,47.6]];
+const BATB=[[[12,37],[1.8,40.4]],[[12,37],[1.2,48]],[[12,37],[4.6,53.6]],[[12,37],[10.4,56.6]]];
+const BIRA=[[15.4,25.8],[12,37],[7.4,40.6],[15.6,47]];
+const BIRF=[[12,37],[3.6,41.4],[5,43.8],[2.8,46.4],[5.8,47.8],[4.4,51],[8.2,50.8],[7.8,54.4],[11.4,52.2],[12.4,56],[14.4,51.4],[15.6,47]];
+const BIRT=[[[12,37],[3.6,41.4]],[[12,38],[2.8,46.4]],[[12.2,39],[4.4,51]],[[12.6,40],[7.8,54.4]],[[13,41],[12.4,56]]];
+const FAN=c=>poly([[17,43],[9.5,53],[11.8,54.6],[13.2,52.4],[15,55],[16.4,52.6],[18.4,54.2],[19.8,45]],0,c)+segs([[[16,45],[11,53.4]],[[17,45.4],[14.6,54.4]]],0,'#000',.35,.3);
+const WART=(pts,op,r)=>pts.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="${r||.7}" fill="${D}" opacity="${op||.3}"/>`).join('');
+function birdWing(c,k,tips,bars){const m=k.endsWith('R');if(k[0]==='w')return poly(BIRA,m,c)+(bars?segs([[[14.6,33],[10.6,40.4]],[[15,37],[11.4,42.6]]],m,'#222',1,.8):'')+segs([[[14.6,30],[11,38.6]]],m,'#fff',.4,.25)+segs([[[14,40],[9,41.4]],[[14.6,43],[10.6,43.6]]],m,'#000',.35,.25);
+return poly(BIRF,m,c)+(tips?poly([[3.6,41.4],[5,43.8],[2.8,46.4],[5.8,47.8],[4.4,51],[8.2,50.8],[7.8,54.4],[11.4,52.2],[12.4,56],[13.2,52],[8,46]],m,tips,'none',0):'')+segs(BIRT,m,'#fff',.35,.35)}
+
+/* ---------- Especies (el ORDEN no se cambia: el código depende de él; solo agregar al final) ---------- */
+const SP={
+mapache:{n:'Mapache',d:'Robusto y panzón · se "lava" las manos',def:'gris',tw:12,lt:9,ls:9,sy:27,hcy:17.5,hs:1.05,q:'wash',
+tail:c=>`${tl('M16 44 Q5 45 6 32',6.4,5,c)}<path d="M16 44 Q5 45 6 32" fill="none" stroke="${D}" stroke-width="5" stroke-dasharray="2.4 2.6"/><circle cx="6" cy="32" r="2.4" fill="${D}"/>`,
+head:c=>`<circle cx="12.6" cy="9.2" r="3.4" fill="${c}" stroke="${O}" stroke-width=".7"/><circle cx="27.4" cy="9.2" r="3.4" fill="${c}" stroke="${O}" stroke-width=".7"/><circle cx="12.6" cy="9.4" r="1.7" fill="#3a3a3a"/><circle cx="27.4" cy="9.4" r="1.7" fill="#3a3a3a"/>${HEAD(c)}<path d="M10.8 19 Q8.6 21.6 11.6 22 M29.2 19 Q31.4 21.6 28.4 22" fill="${L}" stroke="${O}" stroke-width=".3"/><path d="M13 11.8 Q16 10 18.6 11.6 M21.4 11.6 Q24 10 27 11.8" fill="none" stroke="${L}" stroke-width="1.1" stroke-linecap="round"/><path d="M10.6 15.6 Q14 11.6 18.5 14 L21.5 14 Q26 11.6 29.4 15.6 Q26 19.2 21.5 17 L18.5 17 Q14 19.2 10.6 15.6Z" fill="${D}"/><path d="M20 9 V13.4" stroke="${D}" stroke-width="1" opacity=".5"/><ellipse cx="20" cy="20.4" rx="4.6" ry="3.2" fill="${L}"/><ellipse cx="20" cy="19" rx="1.4" ry="1" fill="#111"/>${MOUTH(20)}${WHI}`},
+tlacuache:{n:'Tlacuache',d:'Encorvado y flaco · se hace el muerto',def:'gris',tw:10,lt:9,ls:8,sy:30,hcy:21,q:'dead',
+tail:c=>tl('M16 45 Q4 50 3 39 Q2 31 8 31 Q11 32 9.5 35',2.8,1.8,PK)+'<path d="M15 45.4 Q8 47.6 5 44" stroke="#c9a0ad" stroke-width=".3" fill="none"/>',
+torso:c=>`<path d="M16 28 L15.4 30 M18 27 L17.6 29.4 M22 27 L22.4 29.4 M24 28 L24.6 30" stroke="${L}" stroke-width=".5" opacity=".6"/>`,
+head:c=>`<circle cx="12.4" cy="9.6" r="3.1" fill="#2b2b2b" stroke="${O}" stroke-width=".6"/><circle cx="27.6" cy="9.6" r="3.1" fill="#2b2b2b" stroke="${O}" stroke-width=".6"/><circle cx="12.6" cy="9.4" r="1.2" fill="${PK}" opacity=".6"/><circle cx="27.4" cy="9.4" r="1.2" fill="${PK}" opacity=".6"/>${HEAD(c)}<ellipse cx="20" cy="18" rx="7.4" ry="6.4" fill="${L}"/><path d="M14.6 13.6 Q16 15.6 17.6 15.4 M25.4 13.6 Q24 15.6 22.4 15.4" stroke="${c}" stroke-width="1.4" fill="none" opacity=".7" stroke-linecap="round"/><path d="M20 10 V15" stroke="${c}" stroke-width=".9" opacity=".6"/><ellipse cx="20" cy="22" rx="2.8" ry="4" fill="${L}" stroke="${O}" stroke-width=".4"/><ellipse cx="20" cy="25.4" rx="1.2" ry=".9" fill="${NS}" stroke="${O}" stroke-width=".3"/><path d="M18.4 23.6 Q20 24.6 21.6 23.6" fill="none" stroke="#111" stroke-width=".35"/><path d="M17.4 23.6 L11 22.6 M17.4 24.4 L11.2 25.6 M22.6 23.6 L29 22.6 M22.6 24.4 L28.8 25.6" stroke="#e8e8e8" stroke-width=".35"/>`},
+rata:{n:'Rata',d:'Jorobada, cabeza metida · olfatea',def:'cafe',tw:9.5,lt:8,ls:8,sy:31,hcy:22.5,hs:.95,g:'scurry',q:'sniff',
+tail:c=>tl('M16 45 Q3 48 4 37 Q5 30 9 31',2.2,1.2,PK)+'<path d="M14 45.6 L13.6 44.4 M11 46 L10.6 44.8 M7.4 45.4 L7.2 44.2" stroke="#b98c9a" stroke-width=".3"/>',
+head:c=>`<circle cx="11" cy="10" r="4.8" fill="${c}" stroke="${O}" stroke-width=".7"/><circle cx="29" cy="10" r="4.8" fill="${c}" stroke="${O}" stroke-width=".7"/><circle cx="11" cy="10.2" r="3" fill="${PK}"/><circle cx="29" cy="10.2" r="3" fill="${PK}"/><path d="M9 11.6 Q11 13 13 11.4 M31 11.6 Q29 13 27 11.4" stroke="#c98a9c" stroke-width=".35" fill="none"/>${HEAD(c)}<ellipse cx="20" cy="20.6" rx="3.6" ry="4.6" fill="${c}" stroke="${O}" stroke-width=".5"/><ellipse cx="20" cy="22" rx="2.4" ry="2.8" fill="${L}"/><circle cx="20" cy="23.4" r="1.15" fill="${NS}" stroke="${O}" stroke-width=".3"/><rect x="19.1" y="24.4" width="1.8" height="1.7" rx=".3" fill="#fff8d8" stroke="${O}" stroke-width=".3"/><path d="M20 24.4 V26.1 M17.6 22.6 L11.4 21.6 M17.6 23.4 L11.6 24.6 M22.4 22.6 L28.6 21.6 M22.4 23.4 L28.4 24.6" stroke="${O}" stroke-width=".25"/>`},
+cucaracha:{n:'Cucaracha',d:'Plana y larga · corre a toda velocidad',def:'cobre',tw:12,rx:4,lt:10,ls:10,sy:22,hcy:15,hs:.85,belly:.12,legC:'#5a3220',foot:'bug',g:'scurry',backTB:1,hclip:'cx="20" cy="17" rx="7.6" ry="7"',
+back:c=>`<path d="M16.4 26 Q8.6 33 11.6 51 Q15 50.4 17.4 46Z" fill="${c}" stroke="${O}" stroke-width=".6"/><path d="M23.6 26 Q31.4 33 28.4 51 Q25 50.4 22.6 46Z" fill="${c}" stroke="${O}" stroke-width=".6"/><path d="M14.4 30 Q12 38 13 47 M25.6 30 Q28 38 27 47" stroke="#fff" stroke-width=".7" opacity=".3" fill="none"/><path d="M15.6 30 Q13.6 40 14.6 48 M24.4 30 Q26.4 40 25.4 48" stroke="#000" stroke-width=".35" opacity=".3" fill="none"/>`,
+torso:c=>`<path d="M15.2 36 L11.6 38.6 L10.4 43.4 M24.8 36 L28.4 38.6 L29.6 43.4" stroke="#5a3220" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 31 H24 M16 35 H24 M16 39 H24 M16.4 43 H23.6" stroke="#000" stroke-width=".4" opacity=".25"/>`,
+head:c=>`<g class="ant" style="transform-origin:20px 11px"><path d="M18 11 Q12 1 3.6 -4 M22 11 Q28 1 36.4 -4" fill="none" stroke="#3a2a1c" stroke-width=".8" stroke-linecap="round"/><path d="M15.4 6.4 L14.6 5.6 M12.4 3 L11.6 2.4 M24.6 6.4 L25.4 5.6 M27.6 3 L28.4 2.4" stroke="#3a2a1c" stroke-width=".4"/></g><ellipse cx="20" cy="17" rx="7.6" ry="7" fill="${c}" stroke="${O}" stroke-width=".7"/><path d="M10.6 14.6 Q20 3 29.4 14.6 Q20 11.4 10.6 14.6Z" fill="${c}" stroke="${O}" stroke-width=".6"/><path d="M13.6 11.4 Q20 6 26.4 11.4" stroke="#fff" stroke-width=".8" opacity=".3" fill="none"/><path d="M15 10.4 Q20 8.6 25 10.4" stroke="#000" stroke-width=".5" opacity=".25" fill="none"/><path d="M18.4 21.8 Q17.2 23.4 18 25 M21.6 21.8 Q22.8 23.4 22 25" stroke="#3a2a1c" stroke-width=".8" fill="none" stroke-linecap="round"/><path d="M16 21 L13.6 23.6 M24 21 L26.4 23.6" stroke="#3a2a1c" stroke-width=".5" stroke-linecap="round"/>`},
+paloma:{n:'Paloma',d:'Pechona y patas cortas · cabecea y picotea',def:'pizarra',tw:13,rx:6.5,lt:7,ls:7,sy:29,hcy:23,hs:.8,belly:.35,legC:'#F09595',foot:'bird',g:'bob',q:'peck',wing:(c,k)=>birdWing(c,k,'#3a3f4a',1),tail:c=>FAN(c)+segs([[[12,53.6],[17,45]]],0,'#222',1.2,.6),
+torso:c=>`<path d="M15 26 Q20 29 25 26 L25 29.6 Q20 32.4 15 29.6Z" fill="#5DCAA5" opacity=".75"/><path d="M15 28.4 Q20 31.4 25 28.4 L25 30.6 Q20 33.4 15 30.6Z" fill="#AFA9EC" opacity=".7"/>`,
+head:c=>`${HEAD(c)}<ellipse cx="20" cy="19.4" rx="1.6" ry=".9" fill="${L}"/><path d="M18.9 19.8 L21.1 19.8 L20 23Z" fill="#3a3a3a"/><path d="M19.2 21.2 L20.8 21.2" stroke="#666" stroke-width=".25"/>`},
+zopilote:{n:'Zopilote',d:'Alto y jorobado · toma el sol con alas abiertas',def:'negro',tw:11,lt:12,ls:11,sy:21,hcy:19,hs:.85,belly:.08,legC:'#c9c9c9',foot:'bird',g:'waddle',q:'sun',hclip:'cx="20" cy="15" rx="7.2" ry="7.4"',wing:(c,k)=>birdWing(c,k,'#b9b9b9',0),tail:c=>FAN(c),
+head:c=>`<path d="M10.6 21.6 L12.6 26.4 L14.4 23.4 L16.4 27.4 L18 24 L20 28 L22 24 L23.6 27.4 L25.6 23.4 L27.4 26.4 L29.4 21.6 Q20 26.6 10.6 21.6Z" fill="${c}" stroke="${O}" stroke-width=".5"/><ellipse cx="20" cy="15" rx="7.2" ry="7.4" fill="#6e7178" stroke="${O}" stroke-width=".7"/><path d="M15.4 11 Q20 9 24.6 11 M14.6 14 Q20 12.4 25.4 14 M15.6 17.4 Q17 18 16.4 19.4 M24.4 17.4 Q23 18 23.6 19.4" stroke="${O}" stroke-width=".35" opacity=".5" fill="none"/><path d="M18.6 17.6 Q20 16.6 21.4 17.6 L21 21.4 Q20 23.2 19.4 21.6Z" fill="#e8e2cf" stroke="${O}" stroke-width=".35"/><ellipse cx="20" cy="18.4" rx=".7" ry=".35" fill="#111"/>`},
+cuervo:{n:'Cuervo',d:'Erguido y elegante · ladea la cabeza',def:'negro',tw:10,lt:9,ls:9,sy:26,hcy:18.5,hs:.9,belly:.08,legC:'#2b2b2b',foot:'bird',g:'hop',q:'tilt',wing:(c,k)=>birdWing(c,k,'#2d3a55',0),tail:c=>FAN(c),
+torso:c=>`<path d="M16.4 30 Q17 38 16.6 44" stroke="#85B7EB" stroke-width=".8" opacity=".45" fill="none"/>`,
+head:c=>`${HEAD(c)}<path d="M13.6 10.4 Q20 6.4 26.4 10.4" stroke="#85B7EB" stroke-width="1" opacity=".5" fill="none" stroke-linecap="round"/><path d="M16 23 L17 26 L18.4 23.6 L20 26.6 L21.6 23.6 L23 26 L24 23Z" fill="${c}" stroke="${O}" stroke-width=".35"/><path d="M18 16.6 Q20 15.6 22 16.6 L20 24Z" fill="#2b2b2b" stroke="${O}" stroke-width=".35"/><path d="M19.2 17.2 L19.8 21" stroke="#fff" stroke-width=".35" opacity=".4"/><path d="M18.4 16.4 Q20 14.8 21.6 16.4" stroke="${D}" stroke-width=".9" fill="none"/>`},
+murcielago:{n:'Murciélago',d:'Cuerpo chico, cabezón · se envuelve en sus alas',def:'negro',tw:9,lt:8,ls:7,sy:32,hcy:22,hs:1.15,belly:.25,g:'flutter',q:'wrap',
+wing:(c,k)=>{const m=k.endsWith('R');return k[0]==='w'?poly(BATA,m,'#4a3f66','#a59ed0',.5):poly(BATF,m,'#4a3f66','#a59ed0',.5)+segs(BATB,m,'#c4bde8',.55)+segs([[[8,47],[5.4,45.6]],[[9.6,51],[7.4,51.6]]],m,'#c4bde8',.3,.5)},
+head:c=>`<path d="M11.6 12.5 L9.2 .8 L17.2 8.2Z M28.4 12.5 L30.8 .8 L22.8 8.2Z" fill="${c}" stroke="${O}" stroke-width=".7" stroke-linejoin="round"/><path d="M12 10.5 L10.6 3.6 L15.4 8.2Z M28 10.5 L29.4 3.6 L24.6 8.2Z" fill="${PK}"/><path d="M11.4 7 L13 7.6 M28.6 7 L27 7.6" stroke="#c98a9c" stroke-width=".3"/>${HEAD(c)}<path d="M15 10.6 Q20 8.6 25 10.6 L20 13.6Z" fill="${D}" opacity=".4"/><path d="M18.6 18.4 Q20 17 21.4 18.4 Q20 19.8 18.6 18.4Z" fill="#3a3a3a"/><path d="M17.8 21 Q20 22.4 22.2 21" fill="none" stroke="#111" stroke-width=".5" stroke-linecap="round"/><path d="M18.6 21.3 L19.1 23 L19.6 21.6Z M20.4 21.6 L20.9 23 L21.4 21.3Z" fill="#fff" stroke="${O}" stroke-width=".2"/>`},
+polilla:{n:'Polilla',d:'Peludita y flotante · se mece en el aire',def:'arena',tw:12,lt:8,ls:8,sy:30,hcy:21,g:'hover',q:'sway',
+back:c=>{const w=m=>{const x=v=>m?40-v:v;return `<path d="M${x(17)} 27 Q${x(3)} 9 ${x(-3.4)} 15 Q${x(-6)} 28 ${x(6.6)} 35.4 Q${x(13.6)} 35.4 ${x(17)} 31Z" fill="${c}" stroke="${O}" stroke-width=".7"/><path d="M${x(17)} 32 Q${x(4)} 35.6 ${x(2)} 47.6 Q${x(6.6)} 54 ${x(13.6)} 45.6 Q${x(17)} 39 ${x(17)} 34Z" fill="${c}" stroke="${O}" stroke-width=".7"/><path d="M${x(-3)} 16 Q${x(-5)} 27 ${x(6.6)} 34.4" stroke="${D}" stroke-width="1.6" opacity=".35" fill="none"/><path d="M${x(16)} 29 Q${x(8)} 22 ${x(1)} 17 M${x(16)} 30 Q${x(7)} 30 ${x(0)} 27 M${x(16)} 34 Q${x(9)} 40 ${x(5)} 47" stroke="${D}" stroke-width=".45" opacity=".45" fill="none"/><circle cx="${x(5.6)}" cy="23" r="3.2" fill="${D}" opacity=".55"/><circle cx="${x(5.6)}" cy="23" r="1.6" fill="${L}"/><circle cx="${x(9)}" cy="43" r="1.9" fill="${D}" opacity=".45"/>`};return `<g class="wl" style="transform-origin:17px 30px">${w(0)}</g><g class="wr" style="transform-origin:23px 30px">${w(1)}</g>`},
+torso:c=>`<path d="M16 34 H24 M16 38 H24 M16.4 42 H23.6" stroke="${D}" stroke-width=".6" opacity=".3"/><path d="M15.4 30 L14.4 29 M24.6 30 L25.6 29 M15.2 34 L14.2 33.6 M24.8 34 L25.8 33.6" stroke="${L}" stroke-width=".6" opacity=".6"/>`,
+head:c=>`<path d="M17.4 9.2 Q15 4 12.2 1.6 M22.6 9.2 Q25 4 27.8 1.6" fill="none" stroke="${c}" stroke-width="2.4" stroke-dasharray=".5 .6" opacity=".85"/><path d="M17.4 9.2 Q15 4 12.2 1.6 M22.6 9.2 Q25 4 27.8 1.6" fill="none" stroke="#3a3a3a" stroke-width=".6"/>${HEAD(c)}<path d="M20 17.4 Q20.8 19.2 20 20.4 Q19.2 21.4 20 22" fill="none" stroke="#3a3a3a" stroke-width=".6" stroke-linecap="round"/><g fill="#f6f2e8" stroke="${O}" stroke-width=".35"><circle cx="14.2" cy="23.8" r="2.2"/><circle cx="25.8" cy="23.8" r="2.2"/><circle cx="16.8" cy="25" r="2.3"/><circle cx="23.2" cy="25" r="2.3"/><circle cx="20" cy="25.5" r="2.4"/></g>`},
+mosca:{n:'Mosca',d:'Gordita y zumbona · flota y se frota las patas',def:'negro',tw:12,lt:7,ls:8,sy:31,hcy:22,belly:.1,legC:'#2b2b2b',foot:'bug',g:'hover',q:'rub',
+back:c=>{const w=m=>{const x=v=>m?40-v:v;return `<path d="M${x(17)} 28 Q${x(-2)} 16 ${x(-3.6)} 28.6 Q${x(1)} 39 ${x(17)} 32.6Z" fill="rgba(215,230,250,.62)" stroke="#e6eefa" stroke-width=".6"/><path d="M${x(16)} 29.2 Q${x(6)} 24 ${x(-1.6)} 24 M${x(16)} 30.4 L${x(-2.6)} 29.6 M${x(16)} 31.4 Q${x(6)} 35 ${x(0)} 35" stroke="#8fa4c0" stroke-width=".4" fill="none"/><path d="M${x(11)} 24.6 Q${x(5)} 22.6 ${x(1)} 23.6" stroke="#fff" stroke-width=".7" opacity=".7" fill="none"/>`};return `<g class="wl fast" style="transform-origin:17px 30px">${w(0)}</g><g class="wr fast" style="transform-origin:23px 30px">${w(1)}</g>`},
+torso:c=>`<path d="M15.4 34 H24.6 M15.4 38.4 H24.6 M15.8 42.6 H24.2" stroke="${L}" stroke-width=".8" opacity=".3"/><path d="M15.2 36 L11.6 38.6 L10.4 43.4 M24.8 36 L28.4 38.6 L29.6 43.4" stroke="#2b2b2b" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M15 28 L13.8 27 M25 28 L26.2 27 M15 32 L13.8 31.6 M25 32 L26.2 31.6" stroke="${O}" stroke-width=".4"/>`,
+head:c=>`<path d="M18.4 9 L17 5.4 M21.6 9 L23 5.4 M13 11 L11 8.6 M27 11 L29 8.6 M15.4 9 L14.4 6.2 M24.6 9 L25.6 6.2" stroke="${O}" stroke-width=".6" stroke-linecap="round"/>${HEAD(c)}<path d="M14 13 Q20 10.6 26 13" stroke="#5DCAA5" stroke-width="1" opacity=".45" fill="none"/><path d="M18.8 19.6 L19.4 24.4 Q20 25.6 20.6 24.4 L21.2 19.6Z" fill="#2b2b2b" stroke="${O}" stroke-width=".3"/><ellipse cx="20" cy="25" rx="1.4" ry=".7" fill="#2b2b2b"/>`},
+sapo:{n:'Sapo',d:'Chaparro y ancho · infla la garganta',def:'oliva',tw:15,rx:7,lt:6,ls:6,ko:2.5,sy:37,hcy:28.5,hs:1.1,belly:.6,foot:'frog',g:'hop',q:'puff',hclip:'cx="20" cy="18" rx="11.6" ry="7.4"',
+torso:c=>WART([[17,30],[23,32],[16.6,40],[23.4,42],[20,27.4]]),
+head:c=>`<circle cx="13.4" cy="12.6" r="3.4" fill="${c}" stroke="${O}" stroke-width=".7"/><circle cx="26.6" cy="12.6" r="3.4" fill="${c}" stroke="${O}" stroke-width=".7"/><ellipse cx="20" cy="18" rx="11.6" ry="7.4" fill="${c}" stroke="${O}" stroke-width=".7"/><ellipse class="puff" style="transform-origin:20px 22.4px" cx="20" cy="23.2" rx="5" ry="1.8" fill="#e6e0c4" stroke="${O}" stroke-width=".3"/><path d="M10.4 19.4 Q20 23 29.6 19.4" stroke="#111" stroke-width=".6" fill="none" stroke-linecap="round"/><circle cx="18.8" cy="16" r=".45" fill="#111"/><circle cx="21.2" cy="16" r=".45" fill="#111"/>${WART([[15,16],[24.6,15.4],[20,13.4],[12.4,18],[27.6,17.8],[13.4,11],[26.6,11.4]])}`},
+gato:{n:'Gato',d:'Esbelto y patilargo · azota la cola',def:'naranja',tw:9,lt:12,ls:10,sy:25,hcy:17,hs:.95,q:'swish',tail:c=>tl('M16 44 Q7 46 8 37 Q9 29 13 29',3.8,2.6,c)+'<path d="M8.2 37 L10 37.4 M8.8 33 L10.6 33.6" stroke="#000" stroke-width=".5" opacity=".2"/>',
+torso:c=>`<path d="M15.4 31 L17.6 31.6 M15.4 35 L17.4 35.4 M24.6 31 L22.4 31.6 M24.6 35 L22.6 35.4" stroke="#000" stroke-width=".6" opacity=".18"/>`,
+head:c=>`<path d="M11.4 12 L11.8 3.2 L17.6 8.6Z M28.6 12 L28.2 3.2 L22.4 8.6Z" fill="${c}" stroke="${O}" stroke-width=".7" stroke-linejoin="round"/><path d="M12.6 10.4 L12.9 5.4 L16 8.6Z M27.4 10.4 L27.1 5.4 L24 8.6Z" fill="${PK}"/>${HEAD(c)}<path d="M17 9.5 L17.6 12 M20 9 L20 11.6 M23 9.5 L22.4 12" stroke="${O}" stroke-width=".5" opacity=".4" stroke-linecap="round"/><path d="M10.6 17.6 L13 18 M10.8 19.4 L13 19.2 M29.4 17.6 L27 18 M29.2 19.4 L27 19.2" stroke="#000" stroke-width=".4" opacity=".2"/><ellipse cx="20" cy="20.4" rx="3.8" ry="2.8" fill="${L}" opacity=".9"/><path d="M19 18.8 L21 18.8 L20 20Z" fill="${NS}"/>${MOUTH(20)}${WHI}`},
+coyote:{n:'Coyote',d:'Larguirucho · aúlla de vez en cuando',def:'canela',tw:9,lt:13,ls:11,sy:22,hcy:14.2,hs:.95,q:'howl',tail:c=>`${tl('M16 45 Q6 49 5 37',5.4,4,c)}<circle cx="5.2" cy="36.6" r="2.2" fill="${D}"/>`,
+torso:c=>`<path d="M16 26 Q20 33 24 26Z" fill="${L}" opacity=".85"/><path d="M16 30 Q14.8 34 15.6 38" stroke="#000" stroke-width=".5" opacity=".15" fill="none"/>`,
+head:c=>`<path d="M11.4 12.4 L11.6 1 L17.6 7.8Z M28.6 12.4 L28.4 1 L22.4 7.8Z" fill="${c}" stroke="${O}" stroke-width=".7" stroke-linejoin="round"/><path d="M12.6 10.4 L12.8 3.6 L16.2 7.8Z M27.4 10.4 L27.2 3.6 L23.8 7.8Z" fill="${D}" opacity=".6"/>${HEAD(c)}<path d="M10.8 18 Q13 21 16 21.6 M29.2 18 Q27 21 24 21.6" fill="${L}" stroke="none" opacity=".7"/><ellipse cx="20" cy="21" rx="3.8" ry="4.6" fill="${L}" stroke="${O}" stroke-width=".4"/><ellipse cx="20" cy="19.2" rx="1.4" ry="1" fill="#111"/><path d="M20 20.2 V21.4 M18.6 24 Q20 24.8 21.4 24" fill="none" stroke="#111" stroke-width=".4" stroke-linecap="round"/>`},
+hiena:{n:'Hiena',d:'Hombros altos, cadera baja · se carcajea',def:'arena',tw:12,trap:1,lt:9,ls:9,sy:24,hcy:16.5,g:'lope',q:'laugh',tail:c=>`${tl('M16 45 Q9 48 8 41',4.6,3.4,c)}<circle cx="8" cy="40.6" r="2" fill="${D}"/>`,
+torso:c=>WART([[17.4,30],[22.6,32.4],[17,38],[23,40],[19,44],[21,28]],.55,1)+`<path d="M18 24.6 L19 22.6 L20 24.6 L21 22.6 L22 24.6" fill="${D}" stroke="${O}" stroke-width=".3"/>`,
+head:c=>`<circle cx="12" cy="8.8" r="3.4" fill="${c}" stroke="${O}" stroke-width=".7"/><circle cx="28" cy="8.8" r="3.4" fill="${c}" stroke="${O}" stroke-width=".7"/><path d="M9.2 7.4 Q12 4.4 14.8 7.4 M25.2 7.4 Q28 4.4 30.8 7.4" stroke="${D}" stroke-width="1.4" fill="none"/>${HEAD(c)}<path d="M15 8.6 L16 4.6 L17.4 7.6 L19 3.4 L20.6 7.2 L22 3.8 L23.4 7.6 L25 5 L25.4 8.6" fill="${D}" stroke="${O}" stroke-width=".4" stroke-linejoin="round"/><circle cx="14.6" cy="15" r=".9" fill="${D}" opacity=".5"/><circle cx="25.6" cy="13.8" r=".9" fill="${D}" opacity=".5"/><circle cx="12.6" cy="18" r=".7" fill="${D}" opacity=".5"/><ellipse cx="20" cy="20.6" rx="4.2" ry="4" fill="${D}" opacity=".75"/><ellipse cx="20" cy="18.6" rx="1.5" ry="1.1" fill="#111"/><path d="M17 22.4 Q20 24.6 23 22.4" fill="none" stroke="#111" stroke-width=".55" stroke-linecap="round"/><path d="M18 22.9 L18.4 23.9 L18.8 23.1 M21.2 23.1 L21.6 23.9 L22 22.9" fill="none" stroke="#fff" stroke-width=".3"/>`}};
+SP.pepino={n:'Pepino',d:'Un solo cilindro encurtido · se tambalea',def:'pepino',only:'lunatico838',cap:1,top:4.6,tw:13,lt:9,ls:9,sy:20,hcy:11.2,hs:.8,belly:0,q:'wob',
+body:c=>`<path d="M19.4 5 Q19.2 2 20.8 1 Q21.6 2.6 21.2 5Z" fill="#7a5a2b" stroke="${O}" stroke-width=".4"/><g fill="#9cc65f" stroke="${O}" stroke-width=".25">${[[16,9,.8],[24.4,10.6,.7],[15.4,17,.7],[24.8,19,.9],[17,26,.8],[23.6,29.4,.9],[16.2,36,.7],[23,40,.8],[20.6,44,.6],[19.6,8,.5]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g><path d="M16.4 6.6 Q14.6 27 16.4 47 M23.6 6.6 Q25.4 27 23.6 47" stroke="#4e7a26" stroke-width=".55" fill="none" opacity=".6"/><path d="M15.4 8 Q14.4 20 15 34" stroke="#fff" stroke-width=".9" opacity=".3" fill="none" stroke-linecap="round"/>`,
+face:()=>`<path d="M17.6 15.6 Q20 17.6 22.4 15.6" stroke="#111" stroke-width=".55" fill="none" stroke-linecap="round"/>`};
+const SPK=Object.keys(SP);
+
+/* ---------- Accesorios (orden fijo; agregar solo al final de cada lista) ---------- */
+const heart=(x,y,f)=>`<path d="M${x} ${y+2} L${x-2.6} ${y-.4} Q${x-3.2} ${y-2.8} ${x-1.2} ${y-2.6} Q${x-.2} ${y-2.4} ${x} ${y-1.2} Q${x+.2} ${y-2.4} ${x+1.2} ${y-2.6} Q${x+3.2} ${y-2.8} ${x+2.6} ${y-.4}Z" fill="${f}" stroke="${O}" stroke-width=".4"/>`;
+const ACC={
+h:{n:'Cabeza',items:[
+{n:'Nada',c:0,d:()=>''},
+{n:'Gorra',c:0,d:()=>`<path d="M10.6 12.5 Q20 1.5 29.4 12.5 Z" fill="#E24B4A" stroke="${O}" stroke-width=".6"/><path d="M26 11.2 h7.5 a1.4 1.4 0 0 1 0 2.8 h-7.5z" fill="#A32D2D" stroke="${O}" stroke-width=".4"/><circle cx="20" cy="5" r="1.3" fill="#fff"/><path d="M15 11 Q16 6 20 5 M25 11 Q24 6 20 5" stroke="#A32D2D" stroke-width=".4" fill="none"/>`},
+{n:'Gorro',c:0,d:()=>`<path d="M10.6 13 Q11 1.6 20 1.6 Q29 1.6 29.4 13Z" fill="#5DCAA5" stroke="${O}" stroke-width=".6"/><rect x="10.2" y="10.6" width="19.6" height="3" rx="1.2" fill="#0F6E56" stroke="${O}" stroke-width=".5"/><path d="M13 10.6 V13.6 M16 10.6 V13.6 M19 10.6 V13.6 M22 10.6 V13.6 M25 10.6 V13.6 M28 10.6 V13.6" stroke="#085041" stroke-width=".4"/><circle cx="20" cy="1.6" r="2.3" fill="#fff" stroke="${O}" stroke-width=".5"/>`},
+{n:'Bandana',c:0,d:()=>`<path d="M10.4 12 Q20 6.6 29.6 12 L29.4 14.2 Q20 9 10.6 14.2Z" fill="#E24B4A" stroke="${O}" stroke-width=".5"/><path d="M29 12.6 L33 11 L32 13.4 L33.6 15.6 L29.4 14Z" fill="#A32D2D" stroke="${O}" stroke-width=".4"/><circle cx="15" cy="11" r=".5" fill="#fff"/><circle cx="20" cy="9.4" r=".5" fill="#fff"/><circle cx="25" cy="11" r=".5" fill="#fff"/>`},
+{n:'Flor',c:0,d:()=>`<g stroke="${O}" stroke-width=".3"><circle cx="27" cy="5.8" r="1.7" fill="#ED93B1"/><circle cx="29.2" cy="7.6" r="1.7" fill="#ED93B1"/><circle cx="28.4" cy="10.2" r="1.7" fill="#ED93B1"/><circle cx="25.6" cy="10.2" r="1.7" fill="#ED93B1"/><circle cx="24.8" cy="7.6" r="1.7" fill="#ED93B1"/><circle cx="27" cy="8.2" r="1.3" fill="#FAC775"/></g>`},
+{n:'Audífonos',c:300,d:()=>`<path d="M10.2 16 Q10.2 4.2 20 4.2 Q29.8 4.2 29.8 16" fill="none" stroke="#333" stroke-width="1.6"/><rect x="8" y="13" width="3.6" height="6.4" rx="1.6" fill="#7F77DD" stroke="${O}" stroke-width=".5"/><rect x="28.4" y="13" width="3.6" height="6.4" rx="1.6" fill="#7F77DD" stroke="${O}" stroke-width=".5"/><path d="M8.6 15 V17.6 M31.4 15 V17.6" stroke="#fff" stroke-width=".4" opacity=".5"/>`},
+{n:'Cuernos',c:400,d:()=>`<path d="M14.4 9.6 Q11 5 13 1 Q14.4 4.8 17 8.2Z M25.6 9.6 Q29 5 27 1 Q25.6 4.8 23 8.2Z" fill="#E24B4A" stroke="${O}" stroke-width=".5"/><path d="M13.6 6 L15.4 5.6 M26.4 6 L24.6 5.6" stroke="#A32D2D" stroke-width=".4"/>`},
+{n:'Sombrero charro',c:500,d:()=>`<ellipse cx="20" cy="10" rx="15" ry="3.2" fill="#c9a46b" stroke="${O}" stroke-width=".6"/><path d="M14 10 Q14.6 1 20 1 Q25.4 1 26 10Z" fill="#c9a46b" stroke="${O}" stroke-width=".6"/><path d="M14.2 8 Q20 9.8 25.8 8" stroke="#E24B4A" stroke-width="1.2" fill="none"/><path d="M7 10.4 Q20 13.8 33 10.4" stroke="#8a6a3a" stroke-width=".5" fill="none"/><path d="M8 9.4 Q20 6.8 32 9.4" stroke="#fff" stroke-width=".4" opacity=".35" fill="none"/>`},
+{n:'Sombrero de copa',c:500,d:()=>`<rect x="13.4" y="-2.6" width="13.2" height="12" rx="1" fill="#222" stroke="${O}" stroke-width=".5"/><rect x="13.4" y="6" width="13.2" height="2" fill="#E24B4A"/><ellipse cx="20" cy="10" rx="9.6" ry="1.8" fill="#222" stroke="${O}" stroke-width=".5"/><path d="M15 -1.6 V5" stroke="#fff" stroke-width=".5" opacity=".2"/>`},
+{n:'Aureola',c:800,d:()=>`<g class="halo"><ellipse cx="20" cy=".6" rx="7" ry="1.8" fill="none" stroke="#FAC775" stroke-width="1.4"/><ellipse cx="20" cy=".6" rx="7" ry="1.8" fill="none" stroke="#fff" stroke-width=".4" opacity=".8"/></g>`},
+{n:'Corona',c:1000,d:()=>`<path d="M14 9.5 L14 3 L17 6 L20 1.4 L23 6 L26 3 L26 9.5 Z" fill="#FAC775" stroke="#BA7517" stroke-width=".6"/><circle cx="20" cy="6.6" r="1" fill="#E24B4A"/><circle cx="16.4" cy="7.6" r=".6" fill="#5DCAA5"/><circle cx="23.6" cy="7.6" r=".6" fill="#5DCAA5"/>`}]},
+f:{n:'Cara',items:[
+{n:'Nada',c:0,d:()=>''},
+{n:'Lentes oscuros',c:0,d:()=>`<rect x="12.6" y="13" width="6.8" height="4.6" rx="1.6" fill="#111"/><rect x="20.6" y="13" width="6.8" height="4.6" rx="1.6" fill="#111"/><rect x="19.2" y="14.4" width="1.6" height=".9" fill="#111"/><rect x="13.6" y="13.6" width="2" height=".9" rx=".4" fill="#fff" opacity=".7"/><rect x="21.6" y="13.6" width="2" height=".9" rx=".4" fill="#fff" opacity=".7"/>`},
+{n:'Cubrebocas',c:0,d:()=>`<path d="M12.4 17.4 Q20 15.8 27.6 17.4 L26.8 22.8 Q20 25.4 13.2 22.8Z" fill="#B5D4F4" stroke="${O}" stroke-width=".5"/><path d="M13 19 Q20 17.8 27 19 M13.2 21 Q20 20 26.8 21" stroke="#85B7EB" stroke-width=".4" fill="none"/><path d="M12.6 18 L10.4 14.4 M27.4 18 L29.6 14.4" stroke="#eee" stroke-width=".5"/>`},
+{n:'Parche',c:0,d:()=>`<path d="M10.6 11 L29 19.6" stroke="#111" stroke-width=".7"/><ellipse cx="16" cy="15" rx="2.8" ry="2.4" fill="#111"/>`},
+{n:'Curita',c:0,d:()=>`<g transform="rotate(-25 25 18.6)"><rect x="22.4" y="17.6" width="5.2" height="2" rx=".9" fill="#f2c9a0" stroke="${O}" stroke-width=".3"/><rect x="24.3" y="17.6" width="1.4" height="2" fill="#e0b088"/></g>`},
+{n:'Bigotón',c:0,d:()=>`<path d="M20 20.4 Q17 19 15 20.6 Q14 21.8 13 21 Q14.4 23.6 17 22 Q19 21.4 20 21.6 Q21 21.4 23 22 Q25.6 23.6 27 21 Q26 21.8 25 20.6 Q23 19 20 20.4Z" fill="#2b2b2b"/>`},
+{n:'Lentes 3D',c:200,d:()=>`<rect x="11.8" y="12.8" width="16.4" height="5.2" rx="1" fill="#fff" stroke="${O}" stroke-width=".5"/><rect x="13" y="13.6" width="6" height="3.6" fill="#E24B4A" opacity=".85"/><rect x="21" y="13.6" width="6" height="3.6" fill="#378ADD" opacity=".85"/>`},
+{n:'Lentes corazón',c:300,d:()=>heart(16,15.4,'#ED93B1')+heart(24,15.4,'#ED93B1')+`<path d="M18.6 14.6 H21.4" stroke="${O}" stroke-width=".5"/>`}]},
+n:{n:'Cuello',items:[
+{n:'Nada',c:0,d:()=>''},
+{n:'Paliacate',c:0,d:(l,r,y)=>`<path d="M${l} ${y-1} Q20 ${y+1} ${r} ${y-1} L20 ${y+6}Z" fill="#E24B4A" stroke="${O}" stroke-width=".5"/><circle cx="18" cy="${y+1.6}" r=".45" fill="#fff"/><circle cx="21.6" cy="${y+1.4}" r=".45" fill="#fff"/><circle cx="20" cy="${y+3.6}" r=".45" fill="#fff"/>`},
+{n:'Moño',c:0,d:(l,r,y)=>`<path d="M20 ${y} L16.2 ${y-2} L16.2 ${y+2}Z M20 ${y} L23.8 ${y-2} L23.8 ${y+2}Z" fill="#7F77DD" stroke="${O}" stroke-width=".5"/><circle cx="20" cy="${y}" r="1" fill="#534AB7" stroke="${O}" stroke-width=".3"/>`},
+{n:'Campanita',c:0,d:(l,r,y)=>`<path d="M${l} ${y-.8} Q20 ${y+1.4} ${r} ${y-.8}" stroke="#E24B4A" stroke-width="1.4" fill="none"/><circle cx="20" cy="${y+1.9}" r="1.6" fill="#FAC775" stroke="${O}" stroke-width=".4"/><path d="M18.6 ${y+2.3} H21.4" stroke="#BA7517" stroke-width=".3"/>`},
+{n:'Bufanda',c:200,d:(l,r,y)=>`<path d="M${l-.6} ${y-1.6} Q20 ${y+.6} ${r+.6} ${y-1.6} L${r+.6} ${y+1} Q20 ${y+3.2} ${l-.6} ${y+1}Z" fill="#E24B4A" stroke="${O}" stroke-width=".5"/><path d="M${r-2.2} ${y+1.2} L${r-.8} ${y+9} L${r+1.8} ${y+8.4} L${r+.6} ${y+.8}Z" fill="#E24B4A" stroke="${O}" stroke-width=".5"/><path d="M${r-1.4} ${y+4} L${r+1} ${y+3.6} M${r-1} ${y+6} L${r+1.4} ${y+5.6} M${l+2} ${y-.6} V${y+1.6} M${l+4} ${y-.2} V${y+2}" stroke="#fff" stroke-width=".6"/>`},
+{n:'Collar de picos',c:200,d:(l,r,y)=>{let s='';for(let x=l+1.4;x<r-.6;x+=2.2)s+=`<path d="M${x-.7} ${y+.6+Math.pow((x-20)/(r-l),2)*-3} L${x} ${y+2.4} L${x+.7} ${y+.6}Z" fill="#d6d6d6" stroke="${O}" stroke-width=".2"/>`;return `<path d="M${l} ${y-1.2} Q20 ${y+1} ${r} ${y-1.2} L${r} ${y+.6} Q20 ${y+2.8} ${l} ${y+.6}Z" fill="#222" stroke="${O}" stroke-width=".4"/>`+s}},
+{n:'Cadena de oro',c:600,d:(l,r,y)=>`<path d="M${l+.6} ${y-1} Q20 ${y+5} ${r-.6} ${y-1}" stroke="#FAC775" stroke-width="1" stroke-dasharray="1 .5" fill="none"/><circle cx="20" cy="${y+3.4}" r="2" fill="#FAC775" stroke="#BA7517" stroke-width=".5"/><path d="M19.2 ${y+2.6} Q20 ${y+2} 20.8 ${y+2.6} Q20 ${y+3.4} 19.2 ${y+4} Q20 ${y+4.6} 20.8 ${y+4.2} M20 ${y+1.8} V${y+5}" stroke="#BA7517" stroke-width=".35" fill="none"/>`}]},
+m:{n:'Mano',items:[
+{n:'Nada',c:0,d:()=>''},
+{n:'Bandera',c:0,d:(x,y)=>`<path d="M${x} ${y+1.6} V${y-11}" stroke="#8b5a2b" stroke-width=".8"/><rect x="${x}" y="${y-11}" width="7.2" height="4.4" fill="none" stroke="${O}" stroke-width=".4"/><rect x="${x}" y="${y-11}" width="2.4" height="4.4" fill="#1D9E75"/><rect x="${x+2.4}" y="${y-11}" width="2.4" height="4.4" fill="#fff"/><rect x="${x+4.8}" y="${y-11}" width="2.4" height="4.4" fill="#E24B4A"/><circle cx="${x+3.6}" cy="${y-8.8}" r=".6" fill="#8b5a2b"/>`},
+{n:'Cafecito',c:0,d:(x,y)=>`<rect x="${x-1.4}" y="${y-2.6}" width="3.6" height="4" rx=".6" fill="#fff" stroke="${O}" stroke-width=".4"/><path d="M${x+2.2} ${y-1.8} q1.4 0 1.4 1.2 q0 1.2 -1.4 1.2" fill="none" stroke="${O}" stroke-width=".4"/><path d="M${x-.4} ${y-3.4} q.6 -1 0 -2 M${x+1} ${y-3.4} q.6 -1 0 -2" stroke="#ccc" stroke-width=".35" fill="none"/>`},
+{n:'Pizza',c:0,d:(x,y)=>`<path d="M${x-1} ${y-1} L${x+5} ${y-4} L${x+4} ${y+2}Z" fill="#FAC775" stroke="${O}" stroke-width=".4"/><path d="M${x+5} ${y-4} L${x+4} ${y+2}" stroke="#BA7517" stroke-width="1.2"/><circle cx="${x+2.4}" cy="${y-1}" r=".6" fill="#E24B4A"/><circle cx="${x+3.4}" cy="${y-2.6}" r=".5" fill="#E24B4A"/>`},
+{n:'Control',c:200,d:(x,y)=>`<rect x="${x-3}" y="${y-1.6}" width="6" height="3.2" rx="1.4" fill="#444" stroke="${O}" stroke-width=".4"/><circle cx="${x+1.6}" cy="${y-.4}" r=".4" fill="#E24B4A"/><circle cx="${x+2.4}" cy="${y+.4}" r=".4" fill="#5DCAA5"/><path d="M${x-2} ${y} H${x-.6} M${x-1.3} ${y-.7} V${y+.7}" stroke="#ccc" stroke-width=".3"/>`},
+{n:'Micrófono',c:300,d:(x,y)=>`<rect x="${x-.7}" y="${y-5}" width="1.4" height="6" rx=".5" fill="#333"/><circle cx="${x}" cy="${y-5.8}" r="1.8" fill="#9aa0a6" stroke="${O}" stroke-width=".4"/><path d="M${x-1.2} ${y-6.2} H${x+1.2} M${x-1.2} ${y-5.4} H${x+1.2}" stroke="#666" stroke-width=".25"/>`},
+{n:'Globo',c:300,d:(x,y)=>`<g class="ball" style="transform-origin:${x}px ${y}px"><path d="M${x} ${y} Q${x+3} ${y-6} ${x+2} ${y-12}" stroke="#ddd" stroke-width=".3" fill="none"/><ellipse cx="${x+2}" cy="${y-15}" rx="2.8" ry="3.4" fill="#E24B4A" stroke="${O}" stroke-width=".4"/><path d="M${x+1} ${y-16.6} q.6 -.8 1.4 -.8" stroke="#fff" stroke-width=".4" opacity=".6" fill="none"/></g>`},
+{n:'Trofeo',c:800,d:(x,y)=>`<path d="M${x-2} ${y-6} H${x+2} L${x+1.6} ${y-3} Q${x} ${y-1.6} ${x-1.6} ${y-3}Z" fill="#FAC775" stroke="#BA7517" stroke-width=".4"/><rect x="${x-.4}" y="${y-2.4}" width=".8" height="2" fill="#FAC775"/><rect x="${x-1.4}" y="${y-.6}" width="2.8" height="1.2" fill="#BA7517"/><path d="M${x-2} ${y-5.4} q-1.4 0 -1.2 1.2 q.2 1 1.4 .6 M${x+2} ${y-5.4} q1.4 0 1.2 1.2 q-.2 1 -1.4 .6" stroke="#BA7517" stroke-width=".4" fill="none"/>`}]},
+b:{n:'Espalda',items:[
+{n:'Nada',c:0,d:()=>({b:'',f:''})},
+{n:'Mochila',c:0,d:g=>({b:`<rect x="${20-g.tw/2-2.2}" y="${g.sy+3}" width="${g.tw+4.4}" height="13" rx="2.4" fill="#8b5a2b" stroke="${O}" stroke-width=".5"/><rect x="${20-g.tw/2-2.2}" y="${g.sy+9}" width="${g.tw+4.4}" height="1" fill="#5a3a1c"/>`,f:`<path d="M${20-g.tw/2+1.6} ${g.sy+1} V${g.sy+12} M${20+g.tw/2-1.6} ${g.sy+1} V${g.sy+12}" stroke="#5a3a1c" stroke-width="1.2"/>`})},
+{n:'Capa',c:400,d:g=>({b:`<path d="M${20-g.tw/2} ${g.sy+2} Q20 ${g.sy+4} ${20+g.tw/2} ${g.sy+2} L${20+g.tw/2+5} ${g.hip+13} Q20 ${g.hip+16} ${20-g.tw/2-5} ${g.hip+13}Z" fill="#534AB7" stroke="${O}" stroke-width=".6"/><path d="M${20-g.tw/2+1} ${g.sy+5} L${20-g.tw/2-3} ${g.hip+12} M${20+g.tw/2-1} ${g.sy+5} L${20+g.tw/2+3} ${g.hip+12}" stroke="#3C3489" stroke-width=".6"/>`,f:`<circle cx="${20-g.tw/2+1}" cy="${g.sy+2}" r="1" fill="#FAC775" stroke="${O}" stroke-width=".3"/><circle cx="${20+g.tw/2-1}" cy="${g.sy+2}" r="1" fill="#FAC775" stroke="${O}" stroke-width=".3"/>`})},
+{n:'Jetpack',c:800,d:g=>{const t=x=>`<rect x="${x}" y="${g.sy+3}" width="3.6" height="11" rx="1.6" fill="#9aa3ad" stroke="${O}" stroke-width=".5"/><rect x="${x}" y="${g.sy+5}" width="3.6" height="1.2" fill="#E24B4A"/><path class="flame" style="transform-origin:${x+1.8}px ${g.sy+14}px" d="M${x+.4} ${g.sy+14} L${x+1.8} ${g.sy+20} L${x+3.2} ${g.sy+14}Z" fill="#EF9F27"/><path class="flame" style="transform-origin:${x+1.8}px ${g.sy+14}px" d="M${x+1} ${g.sy+14} L${x+1.8} ${g.sy+17} L${x+2.6} ${g.sy+14}Z" fill="#FAC775"/>`;return {b:t(20-g.tw/2-3.6)+t(20+g.tw/2),f:''}}},
+{n:'Alas de ángel',c:1000,d:g=>{const w=m=>{const x=v=>m?40-v:v,y=v=>v+(g.sy-24.5);return `<path d="M${x(17)} ${y(28)} Q${x(4)} ${y(12)} ${x(-2)} ${y(16)} Q${x(-3)} ${y(22)} ${x(3)} ${y(25)} Q${x(-2)} ${y(28)} ${x(1.6)} ${y(32)} Q${x(5)} ${y(33.4)} ${x(8)} ${y(31.4)} Q${x(5)} ${y(35.6)} ${x(10)} ${y(36.4)} Q${x(14)} ${y(35.6)} ${x(17)} ${y(32)}Z" fill="#fdfcf6" stroke="#bdb8a8" stroke-width=".6"/><path d="M${x(15)} ${y(29)} Q${x(8)} ${y(22)} ${x(1)} ${y(19)} M${x(15)} ${y(30.4)} Q${x(8)} ${y(28)} ${x(3)} ${y(28.6)} M${x(15)} ${y(31.6)} Q${x(11)} ${y(33)} ${x(9)} ${y(34.6)}" stroke="#d8d3c2" stroke-width=".4" fill="none"/>`};return {b:`<g class="aw" style="transform-origin:17px ${g.sy+5}px">${w(0)}</g><g class="aw" style="transform-origin:23px ${g.sy+5}px">${w(1)}</g>`,f:''}}}]}};
+const SLOTS=['h','f','n','m','b'];
+/* Uniforme de mod: todo o nada */
+const mstar=(x,y,r,f)=>{let p='';for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;p+=(i?'L':'M')+(x+Math.cos(a)*rr).toFixed(2)+' '+(y+Math.sin(a)*rr).toFixed(2)}return `<path d="${p}Z" fill="${f}" stroke="#BA7517" stroke-width=".3"/>`};
+const MODHEAD=`<path d="M12.4 13.4 H19 Q19.2 18.4 15.6 18.4 Q12.2 18.4 12.4 13.4Z M21 13.4 H27.6 Q27.8 18.4 24.4 18.4 Q20.8 18.4 21 13.4Z" fill="#c9a24a" stroke="#7a5a1a" stroke-width=".5"/><path d="M19 14 H21" stroke="#7a5a1a" stroke-width=".6"/><path d="M13.6 14.4 L15.4 16.6 M22.2 14.4 L24 16.6" stroke="#fff" stroke-width=".6" opacity=".7"/><path d="M10.8 12 Q11 3.6 20 3 Q29 3.6 29.2 12Z" fill="#3C3489" stroke="${O}" stroke-width=".6"/><rect x="10.6" y="10" width="18.8" height="2.4" fill="#26215C"/><path d="M10.4 12 Q20 15.6 29.6 12 L28.4 14 Q20 17.2 11.6 14Z" fill="#111" stroke="${O}" stroke-width=".4"/>${mstar(20,7.4,2.2,'#FAC775')}`;
+const SHIRT='#534AB7',PANT='#26215C';
+const modBody=(g,id)=>`<g clip-path="url(#t${id})"><rect x="0" y="${g.sy}" width="40" height="${g.hip-g.sy+4}" fill="${SHIRT}"/><rect x="0" y="${g.hip-3.2}" width="40" height="2.2" fill="#111"/><rect x="18.6" y="${g.hip-3.4}" width="2.8" height="2.6" rx=".4" fill="#FAC775"/><path d="M20 ${g.sy+1} V${g.hip-3.4}" stroke="#3C3489" stroke-width=".5"/><circle cx="20" cy="${g.sy+7}" r=".5" fill="#FAC775"/><circle cx="20" cy="${g.sy+11}" r=".5" fill="#FAC775"/><circle cx="20" cy="${g.sy+15}" r=".5" fill="#FAC775"/><rect x="${20+g.tw*.12}" y="${g.sy+5}" width="${g.tw*.26}" height="3" rx=".4" fill="#3C3489"/></g><path d="M${20-g.tw/2+1} ${g.sy+.6} L20 ${g.sy+4} L${20+g.tw/2-1} ${g.sy+.6}" fill="#3C3489" stroke="${O}" stroke-width=".4"/><path d="M${20-g.tw*.3} ${g.sy+5} l2 -.8 l2 .8 v2.4 q0 1.8 -2 2.6 q-2 -.8 -2 -2.6Z" fill="#FAC775" stroke="#BA7517" stroke-width=".4"/>${mstar(20-g.tw*.3+2,g.sy+7,1,'#fff6d8')}`;
+/* Colores de nombre (orden fijo) */
+const NCOL=[{n:'Color de mi chat',v:null},{n:'Blanco',v:'#ffffff'},{n:'Rojo',v:'#FF6B6B'},{n:'Naranja',v:'#FFA94D'},{n:'Amarillo',v:'#FFD43B'},{n:'Verde',v:'#8CE99A'},{n:'Aqua',v:'#63E6BE'},{n:'Azul',v:'#74C0FC'},{n:'Morado',v:'#B197FC'},{n:'Rosa',v:'#F783AC'},{n:'Dorado',v:'#FAC775'},{n:'Arcoíris',v:'rb',sub:1}];
+
+/* ---------- Motor de dibujo ---------- */
+function limb(x1,y1,x2,y2,c,w){w=w||2;return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${O}" stroke-width="${w+1.4}" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`}
+function foot(t,x,y,lc,m){const s=m?1:-1;if(t==='bird')return `<path d="M${x} ${y} L${x-2.6} ${y+1.6} M${x} ${y} L${x} ${y+2} M${x} ${y} L${x+2.6} ${y+1.6} M${x} ${y} L${x+1.2*s} ${y-.6}" stroke="${lc}" stroke-width=".9" stroke-linecap="round"/>`;
+if(t==='bug')return `<path d="M${x} ${y} L${x-1.8*s} ${y+1.2}" stroke="${lc}" stroke-width="1" stroke-linecap="round"/>`;
+if(t==='frog')return `<path d="M${x} ${y} L${x-3.4*s} ${y+1.6} L${x-1.6*s} ${y+1.4} L${x} ${y+2} L${x+1.4*s} ${y+1.2}Z" fill="${lc}" stroke="${O}" stroke-width=".4" stroke-linejoin="round"/>`;
+return `<ellipse cx="${x-1.4*s}" cy="${y+1}" rx="3" ry="1.6" fill="${D}"/><path d="M${x-3.4*s} ${y+1.2} L${x-3*s} ${y+2.2} M${x-2*s} ${y+1.6} L${x-1.8*s} ${y+2.5}" stroke="#555" stroke-width=".3"/>`}
+let UID=0;
+function animal(st,pose,w){const s=SP[SPK[st.s]],c=COLORS[COLK[st.c]],id='u'+(UID++),e=k=>s[k]?s[k](c):'',W=k=>s.wing?s.wing(c,k):'';
+const tw=s.tw||10,lt=s.lt||11,ls=s.ls||10,hip=67-lt-ls,sy=s.sy||24.5,hs=s.hs||1,hcy=s.hcy||16,la=9.5,lf=8,U=st.u?1:0,lc=U?PANT:(s.legC||c),ac=U?SHIRT:c,ft=s.foot||'paw',top=s.cap?s.top:sy;
+const hx=20-tw*.3,kx=hx-1-(s.ko||0),ky=hip+lt,fy=ky+ls,shx=20-tw/2+.6,shy=sy+3.5,ex=shx-3,ey=shy+la,hy=ey+lf;
+const TB=`translate(20 ${sy}) scale(${tw/10} ${(hip+1-sy)/22.5}) translate(-20 -24.5)`,HT=`translate(20 ${hcy}) scale(${hs}) translate(-20 -16)`;
+const neck=hcy+8*hs,R=x=>40-x,g={tw,sy,hip,shy};
+const torsoShape=s.trap?`<path d="M${20-tw/2-1} ${sy+4} Q20 ${sy-1} ${20+tw/2+1} ${sy+4} L${20+tw/2-1.6} ${hip} Q20 ${hip+2.4} ${20-tw/2+1.6} ${hip}Z"/>`:`<rect x="${20-tw/2}" y="${top}" width="${tw}" height="${hip+1-top}" rx="${s.rx||tw/2}"/>`;
+const torso=torsoShape.replace('/>',` fill="${c}" stroke="${O}" stroke-width=".7"/>`);
+const hclip=s.hclip||'cx="20" cy="16" rx="9.6" ry="8.4"';
+const back=s.back?`<g transform="${s.backTB?TB:`translate(0 ${shy-28})`}">${e('back')}</g>`:'';
+const bk=U?{b:'',f:''}:ACC.b.items[st.b].d(g),nk=U?'':ACC.n.items[st.n].d(20-tw/2-.4,20+tw/2+.4,sy+1.4);
+const headInner=(s.cap?'':e('head')+`<ellipse cx="25.4" cy="20" rx="9" ry="8.4" fill="#000" opacity=".15" clip-path="url(#h${id})"/><path d="M12.4 12.6 Q14.4 8.8 18.6 8" stroke="#fff" stroke-width=".9" opacity=".28" fill="none" stroke-linecap="round" clip-path="url(#h${id})"/>`)+(U?MODHEAD:ACC.f.items[st.f].d()+ACC.h.items[st.h].d());
+const leg=m=>{const X=v=>m?R(v):v,cls=m?'R':'L';return `<g class="leg${cls}" style="transform-origin:${X(hx)}px ${hip}px">${limb(X(hx),hip,X(kx),ky,lc,ft==='bug'?1.3:2)}<g class="shin${cls}" style="transform-origin:${X(kx)}px ${ky}px">${limb(X(kx),ky,X(kx),fy,lc,ft==='bug'||ft==='bird'?1.3:2)}${foot(ft,X(kx),fy,lc,m)}</g></g>`};
+const arm=m=>{const X=v=>m?R(v):v,cls=m?'R':'L',item=m&&!U?ACC.m.items[st.m].d(X(ex),hy+.6):'';return `<g class="arm${cls}" style="transform-origin:${X(shx)}px ${shy}px"><g transform="translate(${m?-(shx-15):shx-15} ${shy-28})">${W('w'+cls)}</g>${limb(X(shx),shy,X(ex),ey,ac)}${U?`<rect x="${X(shx)-(m?0:2.4)}" y="${shy-1.4}" width="2.4" height="1.4" rx=".5" fill="#FAC775"/>`:''}<g class="fore${cls}" style="transform-origin:${X(ex)}px ${ey}px"><g transform="translate(${m?-(ex-12):ex-12} ${ey-37})">${W('f'+cls)}</g>${limb(X(ex),ey,X(ex),hy,ac)}<circle cx="${X(ex)}" cy="${hy+.6}" r="1.8" fill="${U?'#fff':D}" stroke="${U?O:'none'}" stroke-width=".3"/>${item}</g></g>`};
+return `<svg class="r st-${pose} g-${s.g||'walk'} q-${s.q||'none'}${s.cap?' cap':''}" width="${w}" height="${w*2}" viewBox="0 0 40 80" aria-hidden="true" style="overflow:visible;display:block">
+<defs><clipPath id="h${id}"><ellipse ${hclip}/></clipPath><clipPath id="t${id}">${torsoShape}</clipPath></defs>
+<ellipse cx="20" cy="68.8" rx="${tw*.6+4}" ry="1.5" fill="#000" opacity=".25"/>
+<g class="rig" style="transform-origin:20px 68px">${bk.b}${back}<g class="tail" style="transform-origin:${hx-1}px ${hip-2}px"><g transform="translate(${hx-17} ${hip-46})">${e('tail')}</g></g>
+${leg(0)}${leg(1)}${torso}<ellipse cx="20" cy="${(sy+hip)/2+1}" rx="${tw*.3}" ry="${(hip-sy)*.32}" fill="${L}" opacity="${s.belly??.8}"/>
+<g clip-path="url(#t${id})"><rect x="${20+tw*.12}" y="${top-2}" width="${tw}" height="${hip-top+6}" fill="#000" opacity=".16"/></g><path d="M${20-tw/2+1.4} ${top+4} V${hip-3}" stroke="#fff" stroke-width=".8" opacity=".2" stroke-linecap="round"/>
+<g transform="${TB}">${e('torso')}</g>${e('body')}${U?modBody(g,id):''}${e('face')}${bk.f}${nk}${arm(0)}${arm(1)}
+<g class="head" style="transform-origin:20px ${neck}px"><g transform="${HT}">${headInner}</g></g></g></svg>`}
+
+/* ---------- Código ---------- */
+const AL='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ',VER='F2';
+/* F2: animal, color, cabeza, cara, cuello, mano, espalda, color de nombre, uniforme de mod (0/1) */
+const fields=st=>[st.s,st.c,st.h,st.f,st.n,st.m,st.b,st.nc,st.u];
+function chk(v){return v.reduce((a,x,i)=>a+x*(i+3),7)%36}
+function encode(st){const v=fields(st);return `!fauna ${VER}-${v.map(x=>AL[x]).join('')}-${AL[chk(v)]}`}
+function decode(txt){const m=String(txt).toUpperCase().match(/F2-([0-9A-Z]{9})-([0-9A-Z])/);if(!m)return null;const v=[...m[1]].map(ch=>AL.indexOf(ch));if(AL[chk(v)]!==m[2])return null;
+const max=[SPK.length,COLK.length,...SLOTS.map(k=>ACC[k].items.length),NCOL.length,2];if(v.some((x,i)=>x>=max[i]))return null;return {s:v[0],c:v[1],h:v[2],f:v[3],n:v[4],m:v[5],b:v[6],nc:v[7],u:v[8]}}
+const cost=st=>st.u?0:SLOTS.reduce((a,k)=>a+ACC[k].items[st[k]].c,0);
+
+/* ---------- Interfaz ---------- */
+let st={s:0,c:0,h:0,f:0,n:0,m:0,b:0,nc:0,u:0},pose='idle',tab='s';
+const TABS=[['s','Animal'],['c','Color'],['h','Cabeza'],['f','Cara'],['n','Cuello'],['m','Mano'],['b','Espalda'],['nc','Nombre'],['u','Rol']];
+const $=id=>document.getElementById(id);
+const user=()=>$('nm').value.trim().replace(/^@/,'').toLowerCase();
+function nameHTML(nc,txt){const c=NCOL[nc];if(c.v==='rb')return `<span class="rb">${txt}</span>`;return `<span style="color:${c.v||'#cfcfd8'}">${txt}</span>`}
+function setTag(){const v=$('nm').value.trim().replace(/^@/,'').replace(/[<>&"]/g,'');$('nmTag').innerHTML=nameHTML(st.nc,'@'+(v||'tu_usuario'))+(st.u?' <span style="color:#B197FC">⚔</span>':'')}
+function renderBig(){$('big').innerHTML=animal(st,pose,120);const s=SP[SPK[st.s]];$('desc').textContent=`${s.n}: ${s.d}`+(s.only?` · Exclusivo de @${s.only}`:'');setTag();
+$('code').textContent=encode(st);const t=cost(st);const req=[st.u?'ser mod':'',NCOL[st.nc].sub?'ser sub':'',s.only?'ser @'+s.only:''].filter(Boolean);
+$('cost').innerHTML=(t?`Costo al pegarlo: <b>${t.toLocaleString('es-MX')} pts</b>`:'Todo gratis')+(req.length?` · Requiere ${req.length>1?req.slice(0,-1).join(', ')+' y '+req[req.length-1]:req[0]}`:'');}
+function renderPoses(){$('poses').innerHTML=POSES.map(p=>`<button class="chip ${pose===p[0]?'on':''}" onclick="pose='${p[0]}';renderPoses();renderBig()">${p[1]}</button>`).join('')}
+function renderTabs(){$('tabs').innerHTML=TABS.map(t=>`<button class="tab ${tab===t[0]?'on':''}" onclick="tab='${t[0]}';renderTabs();renderPanel()">${t[1]}</button>`).join('')}
+const costBadge=c=>`<span class="cost ${c?'':'free'}">${c?c+' pts':'Gratis'}</span>`;
+function tile(on,label,svg,badge,click){return `<button class="opt ${on?'on':''}" onclick="${click}">${badge||''}<div class="tn">${svg}</div><div class="lb">${label}</div></button>`}
+function renderPanel(){let h='';
+if(tab==='s')h='<div class="opts">'+SPK.map((k,i)=>tile(st.s===i,SP[k].n,animal({...st,s:i,c:COLK.indexOf(SP[k].def)},'none',38),SP[k].only?'<span class="lock">🔒 Exclusivo</span>':'',`pick('s',${i})`)).join('')+'</div>';
+else if(tab==='c')h='<div class="sws">'+COLK.map((k,i)=>`<button class="swb ${st.c===i?'on':''}" style="background:${COLORS[k]}" title="${k}" aria-label="${k}" onclick="pick('c',${i})"></button>`).join('')+'</div><p class="desc">Color seleccionado: '+COLK[st.c]+'</p>';
+else if(tab==='nc')h='<p class="desc">El color de tu nombre en todos los overlays.</p><div class="ncs">'+NCOL.map((c,i)=>`<button class="ncb ${st.nc===i?'on':''}" onclick="pick('nc',${i})"><span class="dot" style="background:${c.v==='rb'?'linear-gradient(90deg,#F09595,#FAC775,#97C459,#85B7EB,#AFA9EC)':c.v||'conic-gradient(#FF6B6B,#FFD43B,#8CE99A,#74C0FC,#B197FC,#FF6B6B)'}"></span><span style="flex:1">${c.v?nameHTML(i,c.n):c.n+' <span style="color:var(--mut);font-size:12px">(el que usas en Twitch)</span>'}</span>${c.sub?'<span class="lock" style="position:static">★ Solo subs</span>':''}</button>`).join('')+'</div>';
+else if(tab==='u')h='<p class="desc">Si eres moderador puedes usar el uniforme completo. Es todo o nada: con uniforme se ocultan tus accesorios; sin uniforme usas tu personalización normal.</p><div class="roles">'+tile(!st.u,'Mi personalización',animal({...st,u:0},'none',56),'','pick(\'u\',0)')+tile(st.u,'Uniforme de mod',animal({...st,u:1},'none',56),'<span class="lock">⚔ Solo mods</span>','pick(\'u\',1)')+'</div>';
+else h=(st.u?'<p class="desc">Tienes puesto el uniforme de mod: estos accesorios se guardan, pero no se ven hasta que te lo quites en la pestaña Rol.</p>':'')+'<div class="opts">'+ACC[tab].items.map((it,i)=>tile(st[tab]===i,it.n,animal({...st,u:0,[tab]:i},'none',38),costBadge(it.c),`pick('${tab}',${i})`)).join('')+'</div>';
+$('panel').innerHTML=h}
+function pick(k,i){if(k==='s'){const sp=SP[SPK[i]];if(sp.only&&user()!==sp.only){toast(`🔒 Exclusivo de @${sp.only}`);return}st.s=i;st.c=COLK.indexOf(sp.def)}else st[k]=i;renderBig();renderPanel()}
+function randomize(){const r=n=>Math.floor(Math.random()*n),open=SPK.map((k,i)=>i).filter(i=>!SP[SPK[i]].only);st={s:open[r(open.length)],c:r(COLK.length-1),nc:r(NCOL.length-1),u:0};SLOTS.forEach(k=>st[k]=Math.random()<.45?0:r(ACC[k].items.length));renderBig();renderPanel()}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),2200)}
+function copyCode(){const t=encode(st);const done=()=>toast('¡Copiado! Pégalo en el chat del stream');
+const fb=()=>{const a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();try{document.execCommand('copy');done()}catch(e){toast('Cópialo a mano: '+t)}a.remove()};
+if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(done,fb);else fb()}
+function loadCode(){const v=decode($('load').value);if(!v){$('lerr').textContent='Ese código no es válido. Revisa que esté completo.';return}st=v;renderBig();renderPanel();toast('Mascota cargada')}
+$('nm').addEventListener('input',setTag);
+renderTabs();renderPoses();renderBig();renderPanel();
+</script>
+</body>
+</html>
