@@ -211,8 +211,8 @@ input[disabled]{opacity:.7}
           <li>Elige tu animal, color y accesorios.</li>
           <li>Toca <b>Copiar mascota</b>.</li>
           <li>Pega el código en el chat del stream. El bot lo guarda a tu nombre.</li>
-          <li>Los accesorios con precio se cobran en puntos del canal al pegarlo. Si no te alcanza, el bot te avisa.</li>
-          <li>Lo marcado como exclusivo, solo subs o solo mods, el bot lo revisa con tu cuenta de Twitch.</li>
+          <li>Todo es gratis: cámbiate las veces que quieras. 🎉</li>
+          <li>Solo lo marcado como exclusivo, solo subs o solo mods depende de tu cuenta de Twitch.</li>
         </ol>
         <details style="margin-top:10px">
           <summary>¿Ya tienes un código? Cárgalo para editarlo</summary>
@@ -398,7 +398,7 @@ function chk(v){return v.reduce((a,x,i)=>a+x*(i+3),7)%36}
 function encode(st){const v=fields(st);return `!fauna ${VER}-${v.map(x=>AL[x]).join('')}-${AL[chk(v)]}`}
 function decode(txt){const m=String(txt).toUpperCase().match(/F2-([0-9A-Z]{9})-([0-9A-Z])/);if(!m)return null;const v=[...m[1]].map(ch=>AL.indexOf(ch));if(AL[chk(v)]!==m[2])return null;
 const max=[SPK.length,COLK.length,...SLOTS.map(k=>ACC[k].items.length),NCOL.length,2];if(v.some((x,i)=>x>=max[i]))return null;return {s:v[0],c:v[1],h:v[2],f:v[3],n:v[4],m:v[5],b:v[6],nc:v[7],u:v[8]}}
-const cost=st=>st.u?0:SLOTS.reduce((a,k)=>a+ACC[k].items[st[k]].c,0);
+const cost=st=>0; /* toda la personalización es gratis */
 
 /* ---------- Interfaz ---------- */
 let st={s:0,c:0,h:0,f:0,n:0,m:0,b:0,nc:0,u:0},pose='idle',tab='s';
@@ -455,10 +455,10 @@ function nameHTML(nc,txt){const c=NCOL[nc];if(c.v==='rb')return `<span class="rb
 function setTag(){const v=me?me.name:$('nm').value.trim().replace(/^@/,'');$('nmTag').innerHTML=nameHTML(st.nc,'@'+esc(v||'tu_usuario'))+(st.u?' <span style="color:#B197FC">⚔</span>':'')}
 function renderBig(){$('big').innerHTML=animal(st,pose,120);const s=SP[SPK[st.s]];$('desc').textContent=`${s.n}: ${s.d}`+(s.only?` · Exclusivo de @${s.only}`:'');setTag();
 $('code').textContent=encode(st);const t=cost(st);const req=[st.u?'ser mod':'',NCOL[st.nc].sub?'ser sub':'',s.only?'ser @'+s.only:''].filter(Boolean);
-$('cost').innerHTML=(t?`Costo al pegarlo: <b>${t.toLocaleString('es-MX')} pts</b>`:'Todo gratis')+(req.length?` · Requiere ${req.length>1?req.slice(0,-1).join(', ')+' y '+req[req.length-1]:req[0]}`:'');}
+$('cost').innerHTML=(t?`Hasta <b>${t.toLocaleString('es-MX')} 🍞</b> al pegarlo (lo que ya tengas no se cobra)`:'Todo gratis')+(req.length?` · Requiere ${req.length>1?req.slice(0,-1).join(', ')+' y '+req[req.length-1]:req[0]}`:'');}
 function renderPoses(){$('poses').innerHTML=POSES.map(p=>`<button class="chip ${pose===p[0]?'on':''}" onclick="pose='${p[0]}';renderPoses();renderBig()">${p[1]}</button>`).join('')}
 function renderTabs(){$('tabs').innerHTML=TABS.map(t=>`<button class="tab ${tab===t[0]?'on':''}" onclick="tab='${t[0]}';renderTabs();renderPanel()">${t[1]}</button>`).join('')}
-const costBadge=c=>`<span class="cost ${c?'':'free'}">${c?c+' pts':'Gratis'}</span>`;
+const costBadge=c=>'';
 function tile(on,label,svg,badge,click){return `<button class="opt ${on?'on':''}" onclick="${click}">${badge||''}<div class="tn">${svg}</div><div class="lb">${label}</div></button>`}
 function renderPanel(){let h='';
 if(tab==='s')h='<div class="opts">'+SPK.map((k,i)=>tile(st.s===i,SP[k].n,animal({...st,s:i,c:COLK.indexOf(SP[k].def)},'none',38),SP[k].only?'<span class="lock">🔒 Exclusivo</span>':'',`pick('s',${i})`)).join('')+'</div>';
@@ -470,7 +470,7 @@ $('panel').innerHTML=h}
 function pick(k,i){const b=blocked(k,i);if(b){toast(b);return}if(k==='s'){st.s=i;st.c=COLK.indexOf(SP[SPK[i]].def)}else st[k]=i;renderBig();renderPanel()}
 function randomize(){const r=n=>Math.floor(Math.random()*n),open=SPK.map((k,i)=>i).filter(i=>!SP[SPK[i]].only);st={s:open[r(open.length)],c:r(COLK.length-1),nc:r(NCOL.length-1),u:0};SLOTS.forEach(k=>st[k]=Math.random()<.45?0:r(ACC[k].items.length));renderBig();renderPanel()}
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),2200)}
-function copyCode(){const t=encode(st);const done=()=>toast('¡Copiado! Pégalo en el chat del stream');
+function copyCode(){const t=encode(st);const done=()=>toast(cost(st)?'¡Copiado! Al pegarlo se cobran las 🍞 de lo nuevo':'¡Copiado! Pégalo en el chat del stream');
 const fb=()=>{const a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();try{document.execCommand('copy');done()}catch(e){toast('Cópialo a mano: '+t)}a.remove()};
 if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(done,fb);else fb()}
 function loadCode(){const v=decode($('load').value);if(!v){$('lerr').textContent='Ese código no es válido. Revisa que esté completo.';return}st=v;renderBig();renderPanel();toast('Mascota cargada')}
